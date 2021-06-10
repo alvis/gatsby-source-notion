@@ -1,0 +1,40 @@
+name: code coverage
+
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  coverage:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [14]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: use node ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+      - name: cache node_modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node }}-dependencies-${{ hashFiles('package-lock.json') }}
+      - name: install code climate reporter
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /tmp/cc-test-reporter
+          chmod +x /tmp/cc-test-reporter
+          /tmp/cc-test-reporter before-build
+      - name: install dependencies
+        run: npm ci
+      - name: run coverage
+        run: npm run coverage
+        env:
+          CI: true
+      - name: upload coverage
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        run: /tmp/cc-test-reporter after-build --exit-code $? || [ ! -s coverage/lcov.info ]

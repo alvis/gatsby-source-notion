@@ -1,0 +1,43 @@
+{
+  "name": "gatsby-source-notion",
+  "version": "0.0.0",
+  "description": "Use Notion as the CMS for your Gatsby site, supporting multiple databases and pages.",
+  "keywords": [
+    "gatsby",
+    "gatsby-plugin",
+    "gatsby-source-plugin",
+    "markdown",
+    "notion"
+  ],
+  "homepage": "https://github.com/alvis/gatsby-source-notion#readme",
+  "bugs": {
+    "url": "https://github.com/alvis/gatsby-source-notion/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Alvis HT Tang",
+    "email": "alvis@hilbert.space"
+  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alvis/gatsby-source-notion.git"
+  },
+  "scripts": {
+    "build": "run build",
+    "coverage": "run coverage",
+    "lint": "run lint",
+    "prepare": "presetter bootstrap && run prepare",
+    "prepublishOnly": "run prepublishOnly",
+    "release": "run release --",
+    "test": "run test --",
+    "watch": "run watch"
+  },
+  "devDependencies": {
+    "presetter": "^2.0.0",
+    "presetter-preset": "^2.0.0"
+  },
+  "dependencies": {
+  }
+}
