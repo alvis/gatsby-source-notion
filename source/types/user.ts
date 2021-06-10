@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  * -------------------------------------------------------------------------
  *
- * @summary   Collection of types related to Notion API
+ * @summary   Collection of user related types
  *
  * @author    Alvis HT Tang <alvis@hilbert.space>
  * @license   MIT
@@ -13,6 +13,20 @@
  * -------------------------------------------------------------------------
  */
 
-/* istanbul ignore file */
+interface UserBase<T extends string> {
+  object: 'user';
+  id: string;
+  type: T;
+  name: string;
+  avatar_url?: string;
+}
 
-export * from './user';
+export interface PersonUser extends UserBase<'person'> {
+  person?: {
+    email: string;
+  };
+}
+
+export type BotUser = UserBase<'bot'>;
+
+export type User = PersonUser | BotUser;
