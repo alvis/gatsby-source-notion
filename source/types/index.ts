@@ -15,4 +15,6 @@
 
 /* istanbul ignore file */
 
+export * from './format';
 export * from './user';
+export * from './property';
