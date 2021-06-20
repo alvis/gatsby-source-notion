@@ -35,9 +35,11 @@
     "watch": "run watch"
   },
   "devDependencies": {
+    "nock": "^13.1.0",
     "presetter": "^2.0.0",
     "presetter-preset": "^2.0.0"
   },
   "dependencies": {
+    "got": "^11.8.0"
   }
 }
