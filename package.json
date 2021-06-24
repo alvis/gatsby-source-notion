@@ -34,7 +34,11 @@
     "test": "run test --",
     "watch": "run watch"
   },
+  "peerDependencies": {
+    "gatsby": "^3.0.0-next.0"
+  },
   "devDependencies": {
+    "gatsby": "^3.0.0-next.0",
     "nock": "^13.1.0",
     "presetter": "^2.0.0",
     "presetter-preset": "^2.0.0"
