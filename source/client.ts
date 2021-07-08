@@ -190,6 +190,12 @@ export class Notion {
           title,
           createdTime: page.created_time,
           lastEditedTime: page.last_edited_time,
+          ...Object.fromEntries(
+            Object.entries(page.properties)
+              // omit the already transformed title
+              .filter(([key]) => !['title', 'Name'].includes(key))
+              .map(([key, property]) => [key, getPropertyContent(property)]),
+          ),
         },
         { forceQuotes: true },
       ).trim(),

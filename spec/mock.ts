@@ -16,7 +16,7 @@
 import nock from 'nock';
 import { URL } from 'url';
 
-import type { Block, Database, List, Page } from '#types';
+import type { Block, Database, List, Page, PropertyValueMap } from '#types';
 
 export function mockBlockList(
   blockID: string,
@@ -193,7 +193,35 @@ export function mockDatabasePageList(
     .persist();
 }
 
-export function mockPage(pageID: string, blocks: number = 1) {
+export function mockPage(
+  pageID: string,
+  blocks: number = 1,
+  properties: PropertyValueMap = {
+    title: {
+      id: 'title',
+      type: 'title',
+      title: [
+        {
+          annotations: {
+            bold: false,
+            code: false,
+            color: 'default',
+            italic: false,
+            strikethrough: false,
+            underline: false,
+          },
+          href: null,
+          plain_text: 'Title',
+          text: {
+            content: 'Title',
+            link: null,
+          },
+          type: 'text',
+        },
+      ],
+    },
+  },
+) {
   mockBlockList(pageID, blocks);
 
   const body: Page = {
@@ -207,31 +235,7 @@ export function mockPage(pageID: string, blocks: number = 1) {
     },
     archived: false,
     url: `https://www.notion.so/${pageID}`,
-    properties: {
-      title: {
-        id: 'title',
-        title: [
-          {
-            annotations: {
-              bold: false,
-              code: false,
-              color: 'default',
-              italic: false,
-              strikethrough: false,
-              underline: false,
-            },
-            href: null,
-            plain_text: 'Title',
-            text: {
-              content: 'Title',
-              link: null,
-            },
-            type: 'text',
-          },
-        ],
-        type: 'title',
-      },
-    },
+    properties,
   };
 
   nock('https://api.notion.com')

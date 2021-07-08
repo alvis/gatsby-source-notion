@@ -42,7 +42,36 @@ describe('cl:Notion', () => {
 
   describe('fn:getPage', () => {
     const BLOCKS_PER_PAGE = 2;
-    mockPage('page', BLOCKS_PER_PAGE);
+    mockPage('page', BLOCKS_PER_PAGE, {
+      title: {
+        id: 'title',
+        type: 'title',
+        title: [
+          {
+            annotations: {
+              bold: false,
+              code: false,
+              color: 'default',
+              italic: false,
+              strikethrough: false,
+              underline: false,
+            },
+            href: null,
+            plain_text: 'Title',
+            text: {
+              content: 'Title',
+              link: null,
+            },
+            type: 'text',
+          },
+        ],
+      },
+      extra: {
+        id: 'extra',
+        type: 'number',
+        number: 0,
+      },
+    });
 
     it('return a page in detail', async () => {
       const page = await client.getPage('page');
@@ -57,6 +86,7 @@ id: 'page'
 title: 'Title'
 createdTime: '2020-01-01T00:00:00Z'
 lastEditedTime: '2020-01-01T00:00:00Z'
+extra: 0
 ---
 block 0 for block page
 
