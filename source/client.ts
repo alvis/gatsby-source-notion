@@ -189,6 +189,8 @@ export class Notion {
         {
           id: page.id,
           title,
+          createdTime: page.created_time,
+          lastEditedTime: page.last_edited_time,
         },
         { forceQuotes: true },
       ).trim(),

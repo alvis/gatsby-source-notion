@@ -161,7 +161,7 @@ describe('fn:sourceNodes', () => {
         id: 'page',
         last_edited_time: '2020-01-01T00:00:00Z',
         markdown:
-          "---\nid: 'page'\ntitle: 'Title'\n---\nblock 0 for block page\n\nblock 0 for block page-block0\n",
+          "---\nid: 'page'\ntitle: 'Title'\ncreatedTime: '2020-01-01T00:00:00Z'\nlastEditedTime: '2020-01-01T00:00:00Z'\n---\nblock 0 for block page\n\nblock 0 for block page-block0\n",
         object: 'page',
         parent: { database_id: 'database-page', type: 'database_id' },
         properties: {

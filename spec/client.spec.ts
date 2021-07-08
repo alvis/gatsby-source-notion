@@ -55,6 +55,8 @@ describe('cl:Notion', () => {
 ---
 id: 'page'
 title: 'Title'
+createdTime: '2020-01-01T00:00:00Z'
+lastEditedTime: '2020-01-01T00:00:00Z'
 ---
 block 0 for block page
 
