@@ -17,6 +17,7 @@ import { dump } from 'js-yaml';
 import got from 'got';
 
 import { markdown } from '#markdown';
+import { getPropertyContent } from '#property';
 
 import type { Got, OptionsOfJSONResponseBody, Response } from 'got';
 import type {
@@ -28,7 +29,6 @@ import type {
   FullPage,
   List,
   Page,
-  TitleValue,
 } from './types';
 
 interface Pagination extends Record<string, number | string | undefined> {
@@ -178,11 +178,10 @@ export class Notion {
   private async normalisePage(page: Page): Promise<FullPage> {
     const blocks = await this.getBlocks(page.id);
     // Name for a page in a database, title for an ordinary page
-    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
-    const titleBlock = (page.properties.Name ??
-      page.properties.title) as TitleValue;
-
-    const title = titleBlock.title.map((text) => text.plain_text).join('');
+    const title = getPropertyContent(
+      /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
+      page.properties.Name ?? page.properties.title,
+    ) as string;
     const frontmatter = [
       '---',
       dump(
