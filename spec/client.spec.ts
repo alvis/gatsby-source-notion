@@ -53,8 +53,8 @@ describe('cl:Notion', () => {
       expect(page.markdown).toEqual(
         `
 ---
-id: page
-title: Title
+id: 'page'
+title: 'Title'
 ---
 block 0 for block page
 

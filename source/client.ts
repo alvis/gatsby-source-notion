@@ -13,6 +13,7 @@
  * -------------------------------------------------------------------------
  */
 
+import { dump } from 'js-yaml';
 import got from 'got';
 
 import { markdown } from '#markdown';
@@ -184,8 +185,13 @@ export class Notion {
     const title = titleBlock.title.map((text) => text.plain_text).join('');
     const frontmatter = [
       '---',
-      `id: ${page.id}`,
-      `title: ${title}`,
+      dump(
+        {
+          id: page.id,
+          title,
+        },
+        { forceQuotes: true },
+      ).trim(),
       '---',
     ].join('\n');
     const md = markdown(blocks);
