@@ -98,5 +98,14 @@ block 0 for block page-block1
 `.trimStart(),
       );
     });
+
+    it('return a page from the cache', async () => {
+      // NOTE:
+      const page = await client.getPage('page');
+
+      expect(page.id).toEqual('page');
+      expect(page.title).toEqual('Title');
+      expect(page.blocks.length).toEqual(BLOCKS_PER_PAGE);
+    });
   });
 });

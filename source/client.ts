@@ -13,12 +13,14 @@
  * -------------------------------------------------------------------------
  */
 
+import { caching } from 'cache-manager';
 import { dump } from 'js-yaml';
 import got from 'got';
 
 import { markdown } from '#markdown';
 import { getPropertyContent } from '#property';
 
+import type { Cache } from 'cache-manager';
 import type { Got, OptionsOfJSONResponseBody, Response } from 'got';
 import type {
   Block,
@@ -38,15 +40,41 @@ interface Pagination extends Record<string, number | string | undefined> {
   /* eslint-enable */
 }
 
+export interface NotionTTL {
+  /** the number of seconds in which a database metadata will be cached */
+  databaseMeta: number;
+  /** the number of seconds in which a metadata of a database's entries will be cached */
+  databaseEntries: number;
+  /** the number of seconds in which a page metadata will be cached */
+  pageMeta: number;
+  /** the number of seconds in which a page content will be cached */
+  pageContent: number;
+}
+
 export interface NotionOptions {
   /** access token, default to be the environment variable GATSBY_NOTION_TOKEN */
   token?: string;
   /** api version, default to be 2021-05-13 */
   version?: string;
+  /** cache setting for the client, default to the shared memory store */
+  /** a cache manager for saving unnecessary calls, default to the shared memory store */
+  cache?: Cache;
+  /** TTL settings for each API call types, default to cache database metadata and blocks */
+  ttl?: Partial<NotionTTL>;
 }
+
+export const DEFAULT_CACHE: Cache = caching({ store: 'memory', ttl: 0 });
+export const DEFAULT_TTL: NotionTTL = {
+  databaseMeta: 0,
+  databaseEntries: 0.5,
+  pageMeta: 0.5,
+  pageContent: 0,
+};
 
 /** A simple Notion client */
 export class Notion {
+  private cache: Cache;
+  private ttl: NotionTTL;
   private client: Got;
 
   /**
@@ -55,10 +83,18 @@ export class Notion {
    * @returns a Notion client
    */
   constructor(options?: NotionOptions) {
-    const { token = process.env.GATSBY_NOTION_TOKEN, version = '2021-05-13' } =
-      {
-        ...options,
-      };
+    const {
+      token = process.env.GATSBY_NOTION_TOKEN,
+      version = '2021-05-13',
+      cache = DEFAULT_CACHE,
+    } = { ...options };
+
+    // setup the cache
+    this.cache = cache;
+    this.ttl = {
+      ...DEFAULT_TTL,
+      ...options?.ttl,
+    };
 
     if (!token) {
       throw new Error('missing API token');
@@ -80,16 +116,34 @@ export class Notion {
    * @returns database metadata
    */
   public async getDatabase(id: string): Promise<FullDatabase> {
-    const { body } = await this.client.get<Database>(`databases/${id}`);
-    const pages = await this.getCompleteList<Page>({
-      method: 'post',
-      url: `databases/${id}/query`,
-    });
+    // get the database metadata from cache, if available
+    const { body } = await this.cache.wrap<Response<Database>>(
+      `database:${id}`,
+      async () => this.client.get<Database>(`databases/${id}`),
+      // NOTE: by default the cache would last forever and
+      //       therefore no API call will be make after the first attempt
+      { ttl: this.ttl.databaseMeta },
+    );
+    // get a list of pages in the database from cache, if available
+    const pages = await this.cache.wrap<Page[]>(
+      `database:${id}:pages`,
+      async () =>
+        this.getCompleteList<Page>({
+          method: 'post',
+          url: `databases/${id}/query`,
+        }),
+      // NOTE: by default the cache has only got a 0.5s TTL and
+      //       therefore we will almost always make an API call and
+      //       get the most up-to-date last_edited_time of each page
+      { ttl: this.ttl.databaseEntries },
+    );
 
     return {
       ...body,
       title: body.title.map((text) => text.plain_text).join(''),
-      pages: await Promise.all(pages.map(this.normalisePage.bind(this))),
+      pages: await Promise.all(
+        pages.map(this.normalisePageAndCache.bind(this)),
+      ),
     };
   }
 
@@ -99,9 +153,16 @@ export class Notion {
    * @returns metadata and its content
    */
   public async getPage(id: string): Promise<FullPage> {
-    const { body } = await this.client.get<Page>(`pages/${id}`);
+    const { body } = await this.cache.wrap<Response<Page>>(
+      `page:${id}`,
+      async () => this.client.get<Page>(`pages/${id}`),
+      // NOTE: by default the cache has only got a 0.5s TTL and
+      //       therefore we will almost always make an API call and
+      //       get the most up-to-date last_edited_time of the page
+      { ttl: this.ttl.pageMeta },
+    );
 
-    return this.normalisePage(body);
+    return this.normalisePageAndCache(body);
   }
 
   /**
@@ -176,6 +237,7 @@ export class Notion {
    * @returns page with title and its content
    */
   private async normalisePage(page: Page): Promise<FullPage> {
+    // NOTE: API calls will be made for getting blocks as no cache will be set
     const blocks = await this.getBlocks(page.id);
     // Name for a page in a database, title for an ordinary page
     const title = getPropertyContent(
@@ -204,5 +266,30 @@ export class Notion {
     const md = markdown(blocks);
 
     return { ...page, blocks, title, markdown: [frontmatter, md].join('\n') };
+  }
+
+  /**
+   * normalised a page, or get it from the cache
+   * @param page the page object returned from Notion API
+   * @returns page with title and its content
+   */
+  private async normalisePageAndCache(page: Page): Promise<FullPage> {
+    const cacheKey = `page:${page.id}:content`;
+    const cachedPage = await this.cache.get<FullPage>(cacheKey);
+
+    if (cachedPage && cachedPage.last_edited_time === page.last_edited_time) {
+      return cachedPage;
+    } else {
+      const normalisedPage = await this.normalisePage(page);
+      await this.cache.set(
+        cacheKey,
+        normalisedPage,
+        // NOTE: by default the cache would last forever and
+        //       therefore no API call will be make unless the last_edit_time has changed
+        { ttl: this.ttl.pageContent },
+      );
+
+      return normalisedPage;
+    }
   }
 }

@@ -33,6 +33,7 @@ export function mockBlockList(
   nock('https://api.notion.com')
     .get(`/v1/blocks/${blockID}/children`)
     .query(true)
+    .times(count)
     .reply((uri) => {
       const query = new URL(uri, 'https://api.notion.com').searchParams;
 
@@ -41,47 +42,43 @@ export function mockBlockList(
 
       const body: List<Block> = {
         object: 'list',
-        results:
-          current < count
-            ? [
+        results: [
+          {
+            object: 'block',
+            id: `${blockID}-block${current}`,
+            created_time: '2020-01-01T00:00:00Z',
+            last_edited_time: '2020-01-01T00:00:00Z',
+            has_children: hasChildren,
+            type: 'paragraph',
+            paragraph: {
+              text: [
                 {
-                  object: 'block',
-                  id: `${blockID}-block${current}`,
-                  created_time: '2020-01-01T00:00:00Z',
-                  last_edited_time: '2020-01-01T00:00:00Z',
-                  has_children: hasChildren,
-                  type: 'paragraph',
-                  paragraph: {
-                    text: [
-                      {
-                        type: 'text',
-                        text: {
-                          content: text,
-                          link: null,
-                        },
-                        annotations: {
-                          bold: false,
-                          italic: false,
-                          strikethrough: false,
-                          underline: false,
-                          code: false,
-                          color: 'default',
-                        },
-                        plain_text: text,
-                        href: null,
-                      },
-                    ],
+                  type: 'text',
+                  text: {
+                    content: text,
+                    link: null,
                   },
+                  annotations: {
+                    bold: false,
+                    italic: false,
+                    strikethrough: false,
+                    underline: false,
+                    code: false,
+                    color: 'default',
+                  },
+                  plain_text: text,
+                  href: null,
                 },
-              ]
-            : [],
+              ],
+            },
+          },
+        ],
         next_cursor: current + 1 < count ? `${current + 1}` : null,
         has_more: current + 1 < count,
       };
 
       return [200, body];
-    })
-    .persist();
+    });
 }
 
 export function mockDatabase(
