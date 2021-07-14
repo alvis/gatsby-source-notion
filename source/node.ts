@@ -15,7 +15,7 @@
 
 import { name } from '#.';
 
-import type { NodeInput, SourceNodesArgs } from 'gatsby';
+import type { NodeInput, NodePluginArgs } from 'gatsby';
 
 import type { FullDatabase, FullPage } from '#types';
 
@@ -44,19 +44,19 @@ type NormalisedEntity<E extends FullEntity = FullEntity> = E extends any
 
 /** manage nodes based on data returned from Notion API */
 export class NodeManager {
-  private createNode: SourceNodesArgs['actions']['createNode'];
-  private deleteNode: SourceNodesArgs['actions']['deleteNode'];
-  private createNodeId: SourceNodesArgs['createNodeId'];
-  private createContentDigest: SourceNodesArgs['createContentDigest'];
-  private reporter: SourceNodesArgs['reporter'];
 
   private entityMap: Map<string, NormalisedEntity> = new Map();
+  private createNode: NodePluginArgs['actions']['createNode'];
+  private deleteNode: NodePluginArgs['actions']['deleteNode'];
+  private createNodeId: NodePluginArgs['createNodeId'];
+  private createContentDigest: NodePluginArgs['createContentDigest'];
+  private reporter: NodePluginArgs['reporter'];
 
   /**
    * create a node manager using arguments from the sourceNodes API
    * @param args arguments passed from the sourceNodes API
    */
-  constructor(args: SourceNodesArgs) {
+  constructor(args: NodePluginArgs) {
     /* eslint-disable @typescript-eslint/unbound-method */
     const {
       actions: { createNode, deleteNode },
