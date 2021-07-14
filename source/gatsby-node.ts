@@ -19,10 +19,9 @@ import { name } from '#.';
 import { Notion } from '#client';
 import { getDatabases, getPages } from '#plugin';
 import { NodeManager } from '#node';
+import { normaliseConfig } from '#plugin';
 
 import type { GatsbyNode } from 'gatsby';
-
-import { PluginConfig } from '#plugin';
 
 /* eslint-disable jsdoc/require-param, jsdoc/require-returns  */
 
@@ -53,8 +52,9 @@ export const onPreBootstrap: NonNullable<GatsbyNode['onPreBootstrap']> = async (
 
 export const sourceNodes: NonNullable<GatsbyNode['sourceNodes']> = async (
   args,
-  pluginConfig: PluginConfig,
+  partialConfig,
 ) => {
+  const pluginConfig = normaliseConfig(partialConfig);
   const client = new Notion(pluginConfig);
 
   // getting entries from notion

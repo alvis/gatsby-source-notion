@@ -28,6 +28,38 @@ export interface PluginConfig extends PluginOptions, NotionOptions {
   pages?: string[];
 }
 
+interface FullPluginConfig extends PluginConfig {
+  databases: string[];
+  pages: string[];
+}
+
+/**
+ * fill in the missing config with defaults
+ * @param config pluginConfig passed from the plugin options
+ * @returns a complete config
+ */
+export function normaliseConfig(
+  config: Partial<PluginConfig>,
+): FullPluginConfig {
+  const databases = [
+    ...(config.databases ?? []),
+    ...(process.env['GATSBY_NOTION_DATABASES']?.split(/, +/) ?? []),
+  ].filter(
+    // no empty id
+    (id) => !!id,
+  );
+
+  const pages = [
+    ...(config.pages ?? []),
+    ...(process.env['GATSBY_NOTION_PAGES']?.split(/, +/) ?? []),
+  ].filter(
+    // no empty id
+    (id) => !!id,
+  );
+
+  return { ...config, databases, pages, plugins: [] };
+}
+
 /**
  * gat relevant databases from Notion
  * @param client a Notion client
@@ -36,16 +68,11 @@ export interface PluginConfig extends PluginOptions, NotionOptions {
  */
 export async function getDatabases(
   client: Notion,
-  pluginConfig: PluginConfig,
+  pluginConfig: FullPluginConfig,
 ): Promise<FullDatabase[]> {
   const databases: FullDatabase[] = [];
 
-  const databaseIDs = [
-    ...(pluginConfig.databases ?? []),
-    ...(process.env['GATSBY_NOTION_DATABASES']?.split(/, +/) ?? []),
-  ];
-
-  for (const databaseID of databaseIDs) {
+  for (const databaseID of pluginConfig.databases) {
     const database = await client.getDatabase(databaseID);
     databases.push(database);
   }
@@ -61,16 +88,11 @@ export async function getDatabases(
  */
 export async function getPages(
   client: Notion,
-  pluginConfig: PluginConfig,
+  pluginConfig: FullPluginConfig,
 ): Promise<FullPage[]> {
   const pages: FullPage[] = [];
 
-  const pageIDs = [
-    ...(pluginConfig.pages ?? []),
-    ...(process.env['GATSBY_NOTION_PAGES']?.split(/, +/) ?? []),
-  ];
-
-  for (const pageID of pageIDs) {
+  for (const pageID of pluginConfig.pages) {
     pages.push(await client.getPage(pageID));
   }
 
