@@ -14,8 +14,16 @@
  */
 
 import { Notion } from '#client';
-import { getDatabases, getPages, normaliseConfig } from '#plugin';
+import { getDatabases, getPages, normaliseConfig, sync } from '#plugin';
 import { mockDatabase, mockPage } from './mock';
+
+const mockUpdate = jest.fn();
+jest.mock('#node', () => ({
+  __esModule: true,
+  NodeManager: jest.fn().mockImplementation(() => {
+    return { update: mockUpdate };
+  }),
+}));
 
 const client = new Notion({ token: 'token' });
 
@@ -81,5 +89,127 @@ describe('fn:getPages', () => {
     );
     expect(pages.length).toEqual(1);
     expect(pages.map((page) => page.id)).toEqual(['page']);
+  });
+});
+
+describe('fn:sync', () => {
+  mockDatabase('database');
+  mockPage('page');
+
+  it('source all nodes', async () => {
+    await sync(
+      {} as any,
+      normaliseConfig({
+        token: 'token',
+        databases: ['database'],
+        pages: ['page'],
+      }),
+    );
+
+    expect(mockUpdate).toBeCalledWith([
+      {
+        created_time: '2020-01-01T00:00:00Z',
+        id: 'database',
+        last_edited_time: '2020-01-01T00:00:00Z',
+        object: 'database',
+        pages: [],
+        parent: { type: 'workspace' },
+        properties: { Name: { id: 'title', title: {}, type: 'title' } },
+        title: 'Title',
+      },
+      {
+        archived: false,
+        blocks: [
+          {
+            children: [
+              {
+                created_time: '2020-01-01T00:00:00Z',
+                has_children: false,
+                id: 'page-block0-block0',
+                last_edited_time: '2020-01-01T00:00:00Z',
+                object: 'block',
+                paragraph: {
+                  text: [
+                    {
+                      annotations: {
+                        bold: false,
+                        code: false,
+                        color: 'default',
+                        italic: false,
+                        strikethrough: false,
+                        underline: false,
+                      },
+                      href: null,
+                      plain_text: 'block 0 for block page-block0',
+                      text: {
+                        content: 'block 0 for block page-block0',
+                        link: null,
+                      },
+                      type: 'text',
+                    },
+                  ],
+                },
+                type: 'paragraph',
+              },
+            ],
+            created_time: '2020-01-01T00:00:00Z',
+            has_children: true,
+            id: 'page-block0',
+            last_edited_time: '2020-01-01T00:00:00Z',
+            object: 'block',
+            paragraph: {
+              text: [
+                {
+                  annotations: {
+                    bold: false,
+                    code: false,
+                    color: 'default',
+                    italic: false,
+                    strikethrough: false,
+                    underline: false,
+                  },
+                  href: null,
+                  plain_text: 'block 0 for block page',
+                  text: { content: 'block 0 for block page', link: null },
+                  type: 'text',
+                },
+              ],
+            },
+            type: 'paragraph',
+          },
+        ],
+        created_time: '2020-01-01T00:00:00Z',
+        id: 'page',
+        last_edited_time: '2020-01-01T00:00:00Z',
+        markdown:
+          "---\nid: 'page'\ntitle: 'Title'\ncreatedTime: '2020-01-01T00:00:00Z'\nlastEditedTime: '2020-01-01T00:00:00Z'\n---\nblock 0 for block page\n\nblock 0 for block page-block0\n",
+        object: 'page',
+        parent: { database_id: 'database-page', type: 'database_id' },
+        properties: {
+          title: {
+            id: 'title',
+            title: [
+              {
+                annotations: {
+                  bold: false,
+                  code: false,
+                  color: 'default',
+                  italic: false,
+                  strikethrough: false,
+                  underline: false,
+                },
+                href: null,
+                plain_text: 'Title',
+                text: { content: 'Title', link: null },
+                type: 'text',
+              },
+            ],
+            type: 'title',
+          },
+        },
+        title: 'Title',
+        url: 'https://www.notion.so/page',
+      },
+    ]);
   });
 });

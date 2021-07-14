@@ -14,8 +14,9 @@
  */
 
 import { Notion } from '#client';
+import { NodeManager } from '#node';
 
-import type { PluginOptions } from 'gatsby';
+import type { NodePluginArgs, PluginOptions } from 'gatsby';
 
 import type { NotionOptions } from '#client';
 import type { FullDatabase, FullPage } from '#types';
@@ -97,4 +98,26 @@ export async function getPages(
   }
 
   return pages;
+}
+
+/**
+ * synchronise data between Notion and Gatsby
+ * @param args argument passed from Gatsby's Node API
+ * @param pluginConfig pluginConfig passed from the plugin options
+ */
+export async function sync(
+  args: NodePluginArgs,
+  pluginConfig: FullPluginConfig,
+): Promise<void> {
+  const client = new Notion(pluginConfig);
+  const manager = new NodeManager(args);
+
+  const databases = await getDatabases(client, pluginConfig);
+  const pages = await getPages(client, pluginConfig);
+  for (const database of databases) {
+    pages.push(...database.pages);
+  }
+
+  // update nodes
+  manager.update([...databases, ...pages]);
 }

@@ -16,10 +16,7 @@
 import { version as gatsbyVersion } from 'gatsby/package.json';
 
 import { name } from '#.';
-import { Notion } from '#client';
-import { getDatabases, getPages } from '#plugin';
-import { NodeManager } from '#node';
-import { normaliseConfig } from '#plugin';
+import { normaliseConfig, sync } from '#plugin';
 
 import type { GatsbyNode } from 'gatsby';
 
@@ -54,19 +51,8 @@ export const sourceNodes: NonNullable<GatsbyNode['sourceNodes']> = async (
   args,
   partialConfig,
 ) => {
-  const pluginConfig = normaliseConfig(partialConfig);
-  const client = new Notion(pluginConfig);
-
-  // getting entries from notion
-  const databases = await getDatabases(client, pluginConfig);
-  const pages = await getPages(client, pluginConfig);
-  for (const database of databases) {
-    pages.push(...database.pages);
-  }
-
-  // update nodes
-  const manager = new NodeManager(args);
-  manager.update([...databases, ...pages]);
+  // sync entities from notion
+  await sync(args, normaliseConfig(partialConfig));
 };
 
 /* eslint-enable */
