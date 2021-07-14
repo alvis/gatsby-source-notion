@@ -16,7 +16,11 @@
 import gatsbyPackage from 'gatsby/package.json';
 import joi from 'joi';
 
-import { pluginOptionsSchema, sourceNodes } from '#gatsby-node';
+import {
+  onCreateDevServer,
+  pluginOptionsSchema,
+  sourceNodes,
+} from '#gatsby-node';
 import { sync } from '#plugin';
 
 jest.mock('gatsby/package.json', () => {
@@ -71,6 +75,57 @@ describe('fn:onPreBootstrap', () => {
   it('fail with gatsby earlier than v3', testVersion('2.0.0', false));
   it('pass with gatsby v3', testVersion('3.0.0', true));
   it('fail with future gatsby after v3', testVersion('4.0.0', false));
+});
+
+describe('fn:onCreateDevServer', () => {
+  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => jest.useFakeTimers());
+  afterAll(() => jest.useRealTimers());
+
+  it('disable preview mode if the API rate is 0', async () => {
+    await onCreateDevServer(
+      {} as any,
+      {
+        previewCallRate: 0,
+        databases: ['database'],
+        pages: ['page'],
+        plugins: [],
+      },
+      jest.fn(),
+    );
+
+    jest.advanceTimersToNextTimer();
+
+    // not calling because it's disabled
+    expect(sync).toBeCalledTimes(0);
+  });
+
+  it('disable preview mode if no database or page is given', async () => {
+    await onCreateDevServer({} as any, { plugins: [] }, jest.fn());
+
+    jest.advanceTimersToNextTimer();
+
+    // not calling because it's disabled
+    expect(sync).toBeCalledTimes(0);
+  });
+
+  it('continuously sync data with Notion', async () => {
+    jest.clearAllMocks();
+    await onCreateDevServer(
+      {} as any,
+      { databases: ['database_continuous'], pages: ['page'], plugins: [] },
+      jest.fn(),
+    );
+
+    jest.advanceTimersToNextTimer();
+    await Promise.resolve();
+    expect(sync).toBeCalledTimes(1);
+
+    // sync again after a certain time
+    jest.advanceTimersToNextTimer();
+    await Promise.resolve();
+    expect(sync).toBeCalledTimes(2);
+  });
 });
 
 describe('fn:sourceNodes', () => {

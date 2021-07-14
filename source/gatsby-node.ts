@@ -16,7 +16,7 @@
 import { version as gatsbyVersion } from 'gatsby/package.json';
 
 import { name } from '#.';
-import { normaliseConfig, sync } from '#plugin';
+import { computePreviewUpdateInterval, normaliseConfig, sync } from '#plugin';
 
 import type { GatsbyNode } from 'gatsby';
 
@@ -31,6 +31,14 @@ export const pluginOptionsSchema: NonNullable<
     version: joi.string().optional(),
     databases: joi.array().items(joi.string()).optional(),
     pages: joi.array().items(joi.string()).optional(),
+    ttl: joi
+      .object({
+        databaseMeta: joi.number().optional(),
+        databaseEntries: joi.number().optional(),
+        pageMeta: joi.number().optional(),
+        pageContent: joi.number().optional(),
+      })
+      .optional(),
   });
 };
 
@@ -46,6 +54,26 @@ export const onPreBootstrap: NonNullable<GatsbyNode['onPreBootstrap']> = async (
     reporter.panic(`[${name}] unsupported gatsby version detected`);
   }
 };
+
+export const onCreateDevServer: NonNullable<GatsbyNode['onCreateDevServer']> =
+  async (args, partialConfig) => {
+    const pluginConfig = normaliseConfig(partialConfig);
+    const { previewCallRate } = pluginConfig;
+
+    const previewUpdateInterval = computePreviewUpdateInterval(pluginConfig);
+    if (previewCallRate && previewUpdateInterval) {
+      const scheduleUpdate = (): NodeJS.Timeout =>
+        setTimeout(async () => {
+          // sync entities from notion
+          await sync(args, pluginConfig);
+
+          // schedule the next update
+          scheduleUpdate();
+        }, previewUpdateInterval);
+
+      scheduleUpdate();
+    }
+  };
 
 export const sourceNodes: NonNullable<GatsbyNode['sourceNodes']> = async (
   args,

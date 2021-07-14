@@ -29,6 +29,7 @@ Tired of uploading a markdown file to your GitHub for every new blog post? Havin
 - ⌨️ Title and their properties in plain text accessible via the front matter
 - 🔮 All raw properties accessible via GraphQL
 - 🍻 Support for `remark` and `mdx`
+- 👀 Near real-time preview in development mode
 
 # Quick Start
 
@@ -213,8 +214,37 @@ interface PluginConfig {
   databases?: string[];
   /** UUID of pages to be sourced, default to be `[]` i.e. none */
   pages?: string[];
+  /** the number of api calls per seconds allowed for preview, 0 to disable preview default to be 2.5 */
+  previewCallRate?: number;
+  /** TTL settings for each API call types, default to cache database metadata and blocks */
+  previewTTL?: {
+    /** the number of seconds in which a database metadata will be cached, default to be 0 i.e. permanent */
+    databaseMeta?: number;
+    /** the number of seconds in which a metadata of a database's entries will be cached, default to be 0.5 */
+    databaseEntries?: number;
+    /** the number of seconds in which a page metadata will be cached, default to be 0.5 */
+    pageMeta?: number;
+    /** the number of seconds in which a page content will be cached, default to be 0 i.e. permanent */
+    pageContent?: number;
+  };
 }
 ```
+
+# Preview Mode
+
+This plugin ships with a preview mode by default and it is enabled.
+Start your development server and type on your Notion page to see the content get updated on the Gatsby website.
+
+Under the hood, this plugin automatically pulls the page metadata from Notion regularly and checks for any updates using the `last_edited_time` property.
+When a change is detected, this plugin will reload the content automatically.
+
+**NOTE** To adjust the frequency of update, you can specify the maximum allowed number of API calls.
+The higher the more frequently it checks for updates.
+The actual frequency will be computed automatically according to your needs but be mindful of current limits for Notion API which is 3 requests per second at time of publishing.
+
+**NOTE** Unlike other integrations with preview, such as `gatsby-source-sanity`, this plugin can't sync any content from your Notion document that wasn't saved.
+Notion has autosaving, but it is delayed so you might not see an immediate change in preview.
+Don't worry though, because it’s only a matter of time before you see the change.
 
 # Known Limitations
 
@@ -260,6 +290,7 @@ You just need to embed them using the normal markdown syntax as part of your par
 
 3. What can I do if I don't want to permanently delete a post but just hide it for awhile?
    You can create a page property (for example, a publish double checkbox) and use this information in your page creation process.
+   If you're in the development mode with preview enabled, you should be able to see the removal in near real-time.
 
 # About
 

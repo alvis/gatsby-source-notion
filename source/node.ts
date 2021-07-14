@@ -103,7 +103,10 @@ export class NodeManager {
       this.createNode(this.nodifyEntity(entity));
     }
 
-    this.reporter.info(`[${name}] added ${added.length} nodes`);
+    // don't be noisy if there's nothing new happen
+    if (added.length > 0) {
+      this.reporter.info(`[${name}] added ${added.length} nodes`);
+    }
   }
 
   /**
@@ -115,7 +118,10 @@ export class NodeManager {
       this.createNode(this.nodifyEntity(entity));
     }
 
-    this.reporter.info(`[${name}] updated ${updated.length} nodes`);
+    // don't be noisy if there's nothing new happen
+    if (updated.length > 0) {
+      this.reporter.info(`[${name}] updated ${updated.length} nodes`);
+    }
   }
 
   /**
@@ -127,7 +133,10 @@ export class NodeManager {
       this.deleteNode(this.nodifyEntity(entity));
     }
 
-    this.reporter.info(`[${name}] removed ${removed.length} nodes`);
+    // don't be noisy if there's nothing new happen
+    if (removed.length > 0) {
+      this.reporter.info(`[${name}] removed ${removed.length} nodes`);
+    }
   }
 
   /**
