@@ -44,12 +44,11 @@ type NormalisedEntity<E extends FullEntity = FullEntity> = E extends any
 
 /** manage nodes based on data returned from Notion API */
 export class NodeManager {
-
-  private entityMap: Map<string, NormalisedEntity> = new Map();
   private createNode: NodePluginArgs['actions']['createNode'];
   private deleteNode: NodePluginArgs['actions']['deleteNode'];
   private createNodeId: NodePluginArgs['createNodeId'];
   private createContentDigest: NodePluginArgs['createContentDigest'];
+  private cache: NodePluginArgs['cache'];
   private reporter: NodePluginArgs['reporter'];
 
   /**
@@ -60,12 +59,14 @@ export class NodeManager {
     /* eslint-disable @typescript-eslint/unbound-method */
     const {
       actions: { createNode, deleteNode },
+      cache,
       createContentDigest,
       createNodeId,
       reporter,
     } = args;
     /* eslint-enable */
 
+    this.cache = cache;
     this.createNode = createNode;
     this.deleteNode = deleteNode;
     this.createNodeId = createNodeId;
@@ -77,31 +78,56 @@ export class NodeManager {
    * update nodes available on gatsby
    * @param entities all entities collected from notion, including database and page
    */
-  public update(entities: FullEntity[]): void {
+  public async update(entities: FullEntity[]): Promise<void> {
     // get entries with relationship build-in
-    const newEntityMap = computeEntityMap(entities);
-    const added = this.findNewEntities(newEntityMap);
-    const updated = this.findUpdatedEntities(newEntityMap);
-    const removed = this.findRemovedEntities(newEntityMap);
+    const oldMap = new Map<string, NormalisedEntity>(
+      (await this.cache.get('entityMap')) ?? [],
+    );
+    const newMap = computeEntityMap(entities);
 
     // for the usage of createNode
     // see https://www.gatsbyjs.com/docs/reference/config-files/actions/#createNode
+    this.addNodes(this.findNewEntities(oldMap, newMap));
+    this.updateNodes(this.findUpdatedEntities(oldMap, newMap));
+    this.removeNodes(this.findRemovedEntities(oldMap, newMap));
+
+    await this.cache.set('entityMap', [...newMap.entries()]);
+  }
+
+  /**
+   * add new nodes
+   * @param added new nodes to be added
+   */
+  private addNodes(added: NormalisedEntity[]): void {
     for (const entity of added) {
       this.createNode(this.nodifyEntity(entity));
     }
-    this.reporter.info(`[${name}] added ${added.length} nodes`);
 
+    this.reporter.info(`[${name}] added ${added.length} nodes`);
+  }
+
+  /**
+   * update existing nodes
+   * @param updated updated nodes
+   */
+  private updateNodes(updated: NormalisedEntity[]): void {
     for (const entity of updated) {
       this.createNode(this.nodifyEntity(entity));
     }
-    this.reporter.info(`[${name}] updated ${updated.length} nodes`);
 
+    this.reporter.info(`[${name}] updated ${updated.length} nodes`);
+  }
+
+  /**
+   * remove old nodes
+   * @param removed nodes to be removed
+   */
+  private removeNodes(removed: NormalisedEntity[]): void {
     for (const entity of removed) {
       this.deleteNode(this.nodifyEntity(entity));
     }
-    this.reporter.info(`[${name}] removed ${removed.length} nodes`);
 
-    this.entityMap = newEntityMap;
+    this.reporter.info(`[${name}] removed ${removed.length} nodes`);
   }
 
   /**
@@ -165,15 +191,17 @@ export class NodeManager {
 
   /**
    * find new entities
-   * @param entityMap the new entity map computed from up-to-date data from Notion
+   * @param oldMap the old entity map generated from earlier data
+   * @param newMap the new entity map computed from up-to-date data from Notion
    * @returns a list of new entities
    */
   private findNewEntities(
-    entityMap: Map<string, NormalisedEntity>,
+    oldMap: Map<string, NormalisedEntity>,
+    newMap: Map<string, NormalisedEntity>,
   ): NormalisedEntity[] {
     const added: NormalisedEntity[] = [];
-    for (const [id, newEntity] of entityMap.entries()) {
-      const oldEntity = this.entityMap.get(id);
+    for (const [id, newEntity] of newMap.entries()) {
+      const oldEntity = oldMap.get(id);
       if (!oldEntity) {
         added.push(newEntity);
       }
@@ -184,16 +212,18 @@ export class NodeManager {
 
   /**
    * find removed entities
-   * @param entityMap the new entity map computed from up-to-date data from Notion
+   * @param oldMap the old entity map generated from earlier data
+   * @param newMap the new entity map computed from up-to-date data from Notion
    * @returns a list of removed entities
    */
   private findRemovedEntities(
-    entityMap: Map<string, NormalisedEntity>,
+    oldMap: Map<string, NormalisedEntity>,
+    newMap: Map<string, NormalisedEntity>,
   ): NormalisedEntity[] {
     const removed: NormalisedEntity[] = [];
 
-    for (const [id, oldEntity] of this.entityMap.entries()) {
-      if (!entityMap.has(id)) {
+    for (const [id, oldEntity] of oldMap.entries()) {
+      if (!newMap.has(id)) {
         removed.push(oldEntity);
       }
     }
@@ -203,16 +233,18 @@ export class NodeManager {
 
   /**
    * find updated entities
-   * @param entityMap the new entity map computed from up-to-date data from Notion
+   * @param oldMap the old entity map generated from earlier data
+   * @param newMap the new entity map computed from up-to-date data from Notion
    * @returns a list of updated entities
    */
   private findUpdatedEntities(
-    entityMap: Map<string, NormalisedEntity>,
+    oldMap: Map<string, NormalisedEntity>,
+    newMap: Map<string, NormalisedEntity>,
   ): NormalisedEntity[] {
     const updated: NormalisedEntity[] = [];
 
-    for (const [id, newEntity] of entityMap.entries()) {
-      const oldEntity = this.entityMap.get(id);
+    for (const [id, newEntity] of newMap.entries()) {
+      const oldEntity = oldMap.get(id);
       if (
         oldEntity &&
         oldEntity.last_edited_time !== newEntity.last_edited_time

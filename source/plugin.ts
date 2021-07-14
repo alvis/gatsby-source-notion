@@ -119,5 +119,5 @@ export async function sync(
   }
 
   // update nodes
-  manager.update([...databases, ...pages]);
+  await manager.update([...databases, ...pages]);
 }

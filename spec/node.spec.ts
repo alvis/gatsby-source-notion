@@ -13,6 +13,8 @@
  * -------------------------------------------------------------------------
  */
 
+import { caching } from 'cache-manager';
+
 import { computeEntityMap, normaliseParent, NodeManager } from '#node';
 
 import type { FullDatabase, FullPage } from '#types';
@@ -189,7 +191,7 @@ describe('fn:normaliseParent', () => {
 
 describe('cl:NodeManager', () => {
   describe('fn:update', () => {
-    it('always keep gatsby synced', () => {
+    it('always keep gatsby synced', async () => {
       const createNode = jest.fn();
       const deleteNode = jest.fn();
       const createContentDigest = jest.fn(() => 'digest');
@@ -197,6 +199,7 @@ describe('cl:NodeManager', () => {
 
       const manager = new NodeManager({
         actions: { createNode, deleteNode },
+        cache: caching({ store: 'memory', ttl: 0 }),
         createContentDigest,
         createNodeId,
         reporter: { info: jest.fn() },
@@ -216,7 +219,7 @@ describe('cl:NodeManager', () => {
       });
 
       // first call
-      manager.update([originalDatabase, ...originalDatabase.pages]);
+      await manager.update([originalDatabase, ...originalDatabase.pages]);
 
       expect(createNode).toBeCalledTimes(3);
       expect(deleteNode).toBeCalledTimes(0);
@@ -237,7 +240,7 @@ describe('cl:NodeManager', () => {
           }),
         ],
       });
-      manager.update([updatedDatabase, ...updatedDatabase.pages]);
+      await manager.update([updatedDatabase, ...updatedDatabase.pages]);
       expect(createNode).toBeCalledTimes(1);
       expect(deleteNode).toBeCalledTimes(1);
     });
