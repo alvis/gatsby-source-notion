@@ -13,6 +13,8 @@
  * -------------------------------------------------------------------------
  */
 
+import { createHash } from 'crypto';
+
 import { name } from '#.';
 
 import type { NodeInput, NodePluginArgs } from 'gatsby';
@@ -39,6 +41,7 @@ type NormalisedEntity<E extends FullEntity = FullEntity> = E extends any
   ? Omit<E, 'parent'> & {
       parent: Link | null;
       children: Link[];
+      digest: string;
     }
   : never;
 
@@ -189,10 +192,7 @@ export class NodeManager {
         this.createNodeId(`${object}:${id}`),
       ),
       internal: {
-        contentDigest: this.createContentDigest({
-          id: entity.id,
-          lastEditedTime: entity.last_edited_time,
-        }),
+        contentDigest: entity.digest,
         ...internal,
       },
     };
@@ -254,10 +254,7 @@ export class NodeManager {
 
     for (const [id, newEntity] of newMap.entries()) {
       const oldEntity = oldMap.get(id);
-      if (
-        oldEntity &&
-        oldEntity.last_edited_time !== newEntity.last_edited_time
-      ) {
+      if (oldEntity && oldEntity.digest !== newEntity.digest) {
         updated.push(newEntity);
       }
     }
@@ -298,6 +295,7 @@ export function computeEntityMap(
       ...entity,
       parent: normaliseParent(entity.parent),
       children: [],
+      digest: createHash('sha256').update(JSON.stringify(entity)).digest('hex'),
     });
   }
 

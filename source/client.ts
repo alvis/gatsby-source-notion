@@ -71,6 +71,8 @@ export const DEFAULT_TTL: NotionTTL = {
   pageContent: 0,
 };
 
+const ONE_MINUTE = 60000;
+
 /** A simple Notion client */
 export class Notion {
   private cache: Cache;
@@ -277,7 +279,12 @@ export class Notion {
     const cacheKey = `page:${page.id}:content`;
     const cachedPage = await this.cache.get<FullPage>(cacheKey);
 
-    if (cachedPage && cachedPage.last_edited_time === page.last_edited_time) {
+    if (
+      cachedPage &&
+      cachedPage.last_edited_time === page.last_edited_time &&
+      // don't use the cache if the last edited time happened to be the last minute since Notion rounded the time resolution to minute level recently
+      Date.now() - new Date(page.last_edited_time).getTime() > ONE_MINUTE
+    ) {
       return cachedPage;
     } else {
       const normalisedPage = await this.normalisePage(page);
