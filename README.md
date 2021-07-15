@@ -298,6 +298,14 @@ This source plugin is built on the official Notion API.
 If you are interested in using it as well, here is a [Postman collection](<(<(https://www.postman.com/notionhq/workspace/notion-s-public-api-workspace/overview)>)>) you can explore.
 Also follow the [official API documentation](https://developers.notion.com/reference/intro) to learn more about how to use it.
 
+### Contributing
+
+Any new ideas? or got a bug? We definitely would love to have your contribution!
+
+Feel free to open a discussion, report a bug or ask for a new feature via [issues](https://github.com/alvis/gatsby-source-notion/issues).
+
+Further, read the [contribution guide](https://github.com/alvis/gatsby-source-notion/blob/master/CONTRIBUTING.md) for the detail of the code structure and useful commands etc.
+
 ### License
 
 Copyright © 2021, [Alvis Tang](https://github.com/alvis). Released under the [MIT License](LICENSE).
