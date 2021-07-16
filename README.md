@@ -246,6 +246,8 @@ The actual frequency will be computed automatically according to your needs but 
 Notion has autosaving, but it is delayed so you might not see an immediate change in preview.
 Don't worry though, because it’s only a matter of time before you see the change.
 
+![Preview Mode Demo](https://github.com/alvis/gatsby-source-notion/raw/master/assets/preview.gif)
+
 # Known Limitations
 
 As this plugin relies on the the official Notion API which is still in beta, we share the same limitations as the API.
