@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img alt="Gatsby" src="https://www.gatsbyjs.com/Gatsby-Monogram.svg" width="60" />](https://www.gatsbyjs.org)
+<img alt="Gatsby" src="https://www.gatsbyjs.com/Gatsby-Monogram.svg" width="60" />
 
 # Gatsby Source Plugin Notion
 
