@@ -297,7 +297,7 @@ You just need to embed them using the normal markdown syntax as part of your par
 # About
 
 This source plugin is built on the official Notion API.
-If you are interested in using it as well, here is a [Postman collection](<(<(https://www.postman.com/notionhq/workspace/notion-s-public-api-workspace/overview)>)>) you can explore.
+If you are interested in using it as well, here is a [Postman collection](https://www.postman.com/notionhq/workspace/notion-s-public-api-workspace/overview) you can explore.
 Also follow the [official API documentation](https://developers.notion.com/reference/intro) to learn more about how to use it.
 
 ### Contributing
