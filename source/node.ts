@@ -13,8 +13,6 @@
  * -------------------------------------------------------------------------
  */
 
-import { createHash } from 'crypto';
-
 import { name } from '#.';
 
 import type { NodeInput, NodePluginArgs } from 'gatsby';
@@ -86,7 +84,7 @@ export class NodeManager {
     const oldMap = new Map<string, NormalisedEntity>(
       (await this.cache.get('entityMap')) ?? [],
     );
-    const newMap = computeEntityMap(entities);
+    const newMap = computeEntityMap(entities, this.createContentDigest);
 
     // for the usage of createNode
     // see https://www.gatsbyjs.com/docs/reference/config-files/actions/#createNode
@@ -283,10 +281,12 @@ export class NodeManager {
 /**
  * attach parent-child relationship to gatsby node
  * @param entities all sort of entities including database and page
+ * @param hashFn a hash function for generating the content digest
  * @returns a map of entities with parent and children linked
  */
 export function computeEntityMap(
   entities: FullEntity[],
+  hashFn: (content: string | FullEntity) => string,
 ): Map<string, NormalisedEntity> {
   // create a new working set
   const map = new Map<string, NormalisedEntity>();
@@ -295,7 +295,7 @@ export function computeEntityMap(
       ...entity,
       parent: normaliseParent(entity.parent),
       children: [],
-      digest: createHash('sha256').update(JSON.stringify(entity)).digest('hex'),
+      digest: hashFn(entity),
     });
   }
 

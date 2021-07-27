@@ -14,6 +14,7 @@
  */
 
 import { caching } from 'cache-manager';
+import { createHash } from 'crypto';
 
 import { computeEntityMap, normaliseParent, NodeManager } from '#node';
 
@@ -74,13 +75,17 @@ function generatePage({
   };
 }
 
+function hashFn(content: string | FullDatabase | FullPage): string {
+  return createHash('sha256').update(JSON.stringify(content)).digest('hex');
+}
+
 describe('fn:computeEntityMap', () => {
   it('pass with a workspace parent', () => {
     const workspaceDatabase = generateDatabase({
       databaseID: 'database_under_a_workspace',
     });
 
-    const map = computeEntityMap([workspaceDatabase]);
+    const map = computeEntityMap([workspaceDatabase], hashFn);
     const normalised = map.get('database:database_under_a_workspace');
     expect(normalised!.id).toEqual('database_under_a_workspace');
     expect(normalised!.parent).toEqual(null);
@@ -93,7 +98,7 @@ describe('fn:computeEntityMap', () => {
       parent: { type: 'page_id', page_id: 'parent-page' },
     });
 
-    const map = computeEntityMap([pageDatabase]);
+    const map = computeEntityMap([pageDatabase], hashFn);
     const normalised = map.get('database:database_under_a_page');
     expect(normalised!.id).toEqual('database_under_a_page');
     expect(normalised!.parent).toEqual({ object: 'page', id: 'parent-page' });
@@ -106,7 +111,7 @@ describe('fn:computeEntityMap', () => {
       parent: { type: 'database_id', database_id: 'missing' },
     });
 
-    const map = computeEntityMap([dangledPage]);
+    const map = computeEntityMap([dangledPage], hashFn);
     const normalised = map.get('page:dangled_page');
     expect(normalised!.id).toEqual('dangled_page');
     expect(normalised!.parent).toEqual({ object: 'database', id: 'missing' });
@@ -129,7 +134,10 @@ describe('fn:computeEntityMap', () => {
       parent: { type: 'page_id', page_id: 'page_with_pages' },
     });
 
-    const map = computeEntityMap([database, ...database.pages, page, subpage]);
+    const map = computeEntityMap(
+      [database, ...database.pages, page, subpage],
+      hashFn,
+    );
     expect(map.size).toEqual(4);
 
     const normalisedDB = map.get('database:database_with_pages');
@@ -194,7 +202,7 @@ describe('cl:NodeManager', () => {
     it('always keep gatsby synced', async () => {
       const createNode = jest.fn();
       const deleteNode = jest.fn();
-      const createContentDigest = jest.fn(() => 'digest');
+      const createContentDigest = jest.fn(hashFn);
       const createNodeId = jest.fn((id) => id);
 
       const manager = new NodeManager({
