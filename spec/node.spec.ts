@@ -202,11 +202,12 @@ describe('cl:NodeManager', () => {
     it('always keep gatsby synced', async () => {
       const createNode = jest.fn();
       const deleteNode = jest.fn();
+      const touchNode = jest.fn();
       const createContentDigest = jest.fn(hashFn);
       const createNodeId = jest.fn((id) => id);
 
       const manager = new NodeManager({
-        actions: { createNode, deleteNode },
+        actions: { createNode, deleteNode, touchNode },
         cache: caching({ store: 'memory', ttl: 0 }),
         createContentDigest,
         createNodeId,
@@ -230,10 +231,12 @@ describe('cl:NodeManager', () => {
       await manager.update([originalDatabase, ...originalDatabase.pages]);
 
       expect(createNode).toBeCalledTimes(3);
+      expect(touchNode).toBeCalledTimes(3);
       expect(deleteNode).toBeCalledTimes(0);
 
       // reset
       createNode.mockClear();
+      touchNode.mockClear();
       deleteNode.mockClear();
 
       // second call with data updated
@@ -250,6 +253,7 @@ describe('cl:NodeManager', () => {
       });
       await manager.update([updatedDatabase, ...updatedDatabase.pages]);
       expect(createNode).toBeCalledTimes(2);
+      expect(touchNode).toBeCalledTimes(0);
       expect(deleteNode).toBeCalledTimes(1);
     });
   });

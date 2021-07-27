@@ -47,6 +47,7 @@ type NormalisedEntity<E extends FullEntity = FullEntity> = E extends any
 export class NodeManager {
   private createNode: NodePluginArgs['actions']['createNode'];
   private deleteNode: NodePluginArgs['actions']['deleteNode'];
+  private touchNode: NodePluginArgs['actions']['touchNode'];
   private createNodeId: NodePluginArgs['createNodeId'];
   private createContentDigest: NodePluginArgs['createContentDigest'];
   private cache: NodePluginArgs['cache'];
@@ -59,7 +60,7 @@ export class NodeManager {
   constructor(args: NodePluginArgs) {
     /* eslint-disable @typescript-eslint/unbound-method */
     const {
-      actions: { createNode, deleteNode },
+      actions: { createNode, deleteNode, touchNode },
       cache,
       createContentDigest,
       createNodeId,
@@ -70,6 +71,7 @@ export class NodeManager {
     this.cache = cache;
     this.createNode = createNode;
     this.deleteNode = deleteNode;
+    this.touchNode = touchNode;
     this.createNodeId = createNodeId;
     this.createContentDigest = createContentDigest;
     this.reporter = reporter;
@@ -88,7 +90,7 @@ export class NodeManager {
 
     // for the usage of createNode
     // see https://www.gatsbyjs.com/docs/reference/config-files/actions/#createNode
-    this.addNodes(this.findNewEntities(oldMap, newMap));
+    await this.addNodes(this.findNewEntities(oldMap, newMap));
     this.updateNodes(this.findUpdatedEntities(oldMap, newMap));
     this.removeNodes(this.findRemovedEntities(oldMap, newMap));
 
@@ -99,9 +101,26 @@ export class NodeManager {
    * add new nodes
    * @param added new nodes to be added
    */
-  private addNodes(added: NormalisedEntity[]): void {
+  private async addNodes(added: NormalisedEntity[]): Promise<void> {
     for (const entity of added) {
-      this.createNode(this.nodifyEntity(entity));
+      const node = this.nodifyEntity(entity);
+
+      // DEBT: disable a false alarm from eslint as currently Gatsby is exporting an incorrect type
+      //       this should be removed when https://github.com/gatsbyjs/gatsby/pull/32522 is merged
+      /* eslint-disable @typescript-eslint/await-thenable */
+      // create the node
+      await this.createNode(node);
+      /* eslint-enable */
+
+      // make sure that the node will remain in the cache
+      this.touchNode({
+        // since createNode mutates node, reconstruct the node input again here
+        id: node.id,
+        internal: {
+          type: node.internal.type,
+          contentDigest: node.internal.contentDigest,
+        },
+      });
     }
 
     // don't be noisy if there's nothing new happen
