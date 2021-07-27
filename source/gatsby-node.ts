@@ -31,7 +31,8 @@ export const pluginOptionsSchema: NonNullable<
     version: joi.string().optional(),
     databases: joi.array().items(joi.string()).optional(),
     pages: joi.array().items(joi.string()).optional(),
-    ttl: joi
+    previewCallRate: joi.number().optional(),
+    previewTTL: joi
       .object({
         databaseMeta: joi.number().optional(),
         databaseEntries: joi.number().optional(),
