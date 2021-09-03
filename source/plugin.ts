@@ -82,7 +82,7 @@ export function normaliseConfig(
 
   const databases = [
     ...(config.databases ?? []),
-    ...(process.env['GATSBY_NOTION_DATABASES']?.split(/, +/) ?? []),
+    ...(process.env['GATSBY_NOTION_DATABASES']?.split(/, */) ?? []),
   ].filter(
     // no empty id
     (id) => !!id,
@@ -90,7 +90,7 @@ export function normaliseConfig(
 
   const pages = [
     ...(config.pages ?? []),
-    ...(process.env['GATSBY_NOTION_PAGES']?.split(/, +/) ?? []),
+    ...(process.env['GATSBY_NOTION_PAGES']?.split(/, */) ?? []),
   ].filter(
     // no empty id
     (id) => !!id,
