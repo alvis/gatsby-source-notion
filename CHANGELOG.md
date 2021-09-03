@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.2](https://github.com/alvis/gatsby-source-notion/compare/v1.0.1...v1.0.2) (2021-09-03)
+
+
+### 🐛 Bug Fixes
+
+* allow no spacing between IDs in those environment variables ([caaab11](https://github.com/alvis/gatsby-source-notion/commit/caaab11ebeddf154401b21280d587989390f3d02))
+* correct the option schema ([6e483d7](https://github.com/alvis/gatsby-source-notion/commit/6e483d703f43c6c9e4b645dcf779a85d94e6d252))
+* persist nodes over reruns ([ade9379](https://github.com/alvis/gatsby-source-notion/commit/ade9379404595e5ed92b0649341929be751a18ae))
+* use Gatsby's digest function instead of sha ([e683066](https://github.com/alvis/gatsby-source-notion/commit/e683066b6b5b9f3e1bfded466cf7b9703ec1956e))
+
+
+### 📚 Documentation
+
+* fix the Postman collection link ([1e933bc](https://github.com/alvis/gatsby-source-notion/commit/1e933bc4a4369eb628c67f8c1a580558d589fdeb))
+* remove the Logo link ([2cd6fbf](https://github.com/alvis/gatsby-source-notion/commit/2cd6fbf00ec0d21030d8d57c38a1a33ef095e310))
+
+
+
 ## 1.0.1 (2021-07-16)
 
 
