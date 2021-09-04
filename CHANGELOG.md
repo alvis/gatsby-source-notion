@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.3](https://github.com/alvis/gatsby-source-notion/compare/v1.0.2...v1.0.3) (2021-09-04)
+
+
+### 🐛 Bug Fixes
+
+* retain all current nodes for the next build ([495d9e6](https://github.com/alvis/gatsby-source-notion/commit/495d9e669dcca663c90a397603e796b87ad625f3))
+
+
+
 ## [1.0.2](https://github.com/alvis/gatsby-source-notion/compare/v1.0.1...v1.0.2) (2021-09-03)
 
 
