@@ -253,7 +253,7 @@ describe('cl:NodeManager', () => {
       });
       await manager.update([updatedDatabase, ...updatedDatabase.pages]);
       expect(createNode).toBeCalledTimes(2);
-      expect(touchNode).toBeCalledTimes(0);
+      expect(touchNode).toBeCalledTimes(2);
       expect(deleteNode).toBeCalledTimes(1);
     });
   });

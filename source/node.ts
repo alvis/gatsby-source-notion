@@ -15,9 +15,9 @@
 
 import { name } from '#.';
 
+import type { FullDatabase, FullPage } from '#types';
 import type { NodeInput, NodePluginArgs } from 'gatsby';
 
-import type { FullDatabase, FullPage } from '#types';
 
 interface ContentNode<Type extends string> extends NodeInput {
   ref: string;
@@ -93,6 +93,7 @@ export class NodeManager {
     await this.addNodes(this.findNewEntities(oldMap, newMap));
     this.updateNodes(this.findUpdatedEntities(oldMap, newMap));
     this.removeNodes(this.findRemovedEntities(oldMap, newMap));
+    this.touchNodes([...newMap.values()]);
 
     await this.cache.set('entityMap', [...newMap.entries()]);
   }
@@ -111,16 +112,6 @@ export class NodeManager {
       // create the node
       await this.createNode(node);
       /* eslint-enable */
-
-      // make sure that the node will remain in the cache
-      this.touchNode({
-        // since createNode mutates node, reconstruct the node input again here
-        id: node.id,
-        internal: {
-          type: node.internal.type,
-          contentDigest: node.internal.contentDigest,
-        },
-      });
     }
 
     // don't be noisy if there's nothing new happen
@@ -157,6 +148,25 @@ export class NodeManager {
     if (removed.length > 0) {
       this.reporter.info(`[${name}] removed ${removed.length} nodes`);
     }
+  }
+
+  /**
+   * keep all current notion nodes alive
+   * @param entities list of current notion entities
+   */
+  private touchNodes(entities: NormalisedEntity[]): void {
+    for (const entity of entities) {
+      const node = this.nodifyEntity(entity);
+      this.touchNode({
+        id: node.id,
+        internal: {
+          type: node.internal.type,
+          contentDigest: node.internal.contentDigest,
+        },
+      });
+    }
+
+    this.reporter.info(`[${name}] processed ${entities.length} nodes`);
   }
 
   /**
