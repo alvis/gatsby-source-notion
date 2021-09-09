@@ -14,14 +14,15 @@
  */
 
 import { caching } from 'cache-manager';
-import { dump } from 'js-yaml';
 import got from 'got';
+import { dump } from 'js-yaml';
 
 import { markdown } from '#markdown';
 import { getPropertyContent } from '#property';
 
 import type { Cache } from 'cache-manager';
 import type { Got, OptionsOfJSONResponseBody, Response } from 'got';
+
 import type {
   Block,
   Database,

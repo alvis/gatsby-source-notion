@@ -18,7 +18,6 @@ import { name } from '#.';
 import type { FullDatabase, FullPage } from '#types';
 import type { NodeInput, NodePluginArgs } from 'gatsby';
 
-
 interface ContentNode<Type extends string> extends NodeInput {
   ref: string;
   createdTime: string;
