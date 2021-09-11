@@ -16,26 +16,34 @@
 import { caching } from 'cache-manager';
 import { createHash } from 'crypto';
 
-import { computeEntityMap, normaliseParent, NodeManager } from '#node';
+import {
+  computeChanges,
+  computeEntityMap,
+  normaliseParent,
+  NodeManager,
+} from '#node';
 
 import type { FullDatabase, FullPage } from '#types';
+import { NodeInput } from 'gatsby';
 
 function generateDatabase({
   databaseID = 'database',
   title = 'Database Title',
   parent = { type: 'workspace' },
+  lastEditedTime = '2020-01-01T00:00:00Z',
   pages = [],
 }: {
   databaseID?: string;
   title?: string;
   parent?: FullDatabase['parent'];
+  lastEditedTime?: string;
   pages?: FullPage[];
 } = {}): FullDatabase {
   return {
     object: 'database',
     id: databaseID,
     created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    last_edited_time: lastEditedTime,
     parent,
     title,
     properties: {
@@ -75,9 +83,50 @@ function generatePage({
   };
 }
 
-function hashFn(content: string | FullDatabase | FullPage): string {
-  return createHash('sha256').update(JSON.stringify(content)).digest('hex');
-}
+describe('fn:computeChanges', () => {
+  it('compute changes correctly', () => {
+    const old = new Map<string, NodeInput>(
+      Object.entries({
+        id0: {
+          id: 'id0',
+          internal: { type: 'type', contentDigest: '0' },
+        },
+        id1: {
+          id: 'id1',
+          internal: { type: 'type', contentDigest: '1' },
+        },
+        id2: {
+          id: 'id2',
+          internal: { type: 'type', contentDigest: '2' },
+        },
+      }),
+    );
+
+    const current = new Map<string, NodeInput>(
+      Object.entries({
+        id1: {
+          id: 'id1',
+          internal: { type: 'type', contentDigest: 'updated' },
+        },
+        id2: {
+          id: 'id2',
+          internal: { type: 'type', contentDigest: '2' },
+        },
+        new: {
+          id: 'new',
+          internal: { type: 'type', contentDigest: 'new' },
+        },
+      }),
+    );
+
+    const { added, updated, removed, unchanged } = computeChanges(old, current);
+
+    expect(added.length).toEqual(1); // new
+    expect(updated.length).toEqual(1); // id1
+    expect(removed.length).toEqual(1); // id0
+    expect(unchanged.length).toEqual(1); // id2
+  });
+});
 
 describe('fn:computeEntityMap', () => {
   it('pass with a workspace parent', () => {
@@ -85,7 +134,7 @@ describe('fn:computeEntityMap', () => {
       databaseID: 'database_under_a_workspace',
     });
 
-    const map = computeEntityMap([workspaceDatabase], hashFn);
+    const map = computeEntityMap([workspaceDatabase]);
     const normalised = map.get('database:database_under_a_workspace');
     expect(normalised!.id).toEqual('database_under_a_workspace');
     expect(normalised!.parent).toEqual(null);
@@ -98,7 +147,7 @@ describe('fn:computeEntityMap', () => {
       parent: { type: 'page_id', page_id: 'parent-page' },
     });
 
-    const map = computeEntityMap([pageDatabase], hashFn);
+    const map = computeEntityMap([pageDatabase]);
     const normalised = map.get('database:database_under_a_page');
     expect(normalised!.id).toEqual('database_under_a_page');
     expect(normalised!.parent).toEqual({ object: 'page', id: 'parent-page' });
@@ -111,7 +160,7 @@ describe('fn:computeEntityMap', () => {
       parent: { type: 'database_id', database_id: 'missing' },
     });
 
-    const map = computeEntityMap([dangledPage], hashFn);
+    const map = computeEntityMap([dangledPage]);
     const normalised = map.get('page:dangled_page');
     expect(normalised!.id).toEqual('dangled_page');
     expect(normalised!.parent).toEqual({ object: 'database', id: 'missing' });
@@ -134,10 +183,7 @@ describe('fn:computeEntityMap', () => {
       parent: { type: 'page_id', page_id: 'page_with_pages' },
     });
 
-    const map = computeEntityMap(
-      [database, ...database.pages, page, subpage],
-      hashFn,
-    );
+    const map = computeEntityMap([database, ...database.pages, page, subpage]);
     expect(map.size).toEqual(4);
 
     const normalisedDB = map.get('database:database_with_pages');
@@ -199,11 +245,24 @@ describe('fn:normaliseParent', () => {
 
 describe('cl:NodeManager', () => {
   describe('fn:update', () => {
-    it('always keep gatsby synced', async () => {
-      const createNode = jest.fn();
-      const deleteNode = jest.fn();
-      const touchNode = jest.fn();
-      const createContentDigest = jest.fn(hashFn);
+    const createDummyNode = async (
+      args?: Partial<
+        Record<'createNode' | 'deleteNode' | 'touchNode' | 'getNode', jest.Mock>
+      >,
+    ) => {
+      const { createNode, deleteNode, touchNode, getNode } = {
+        createNode: jest.fn(),
+        deleteNode: jest.fn(),
+        touchNode: jest.fn(),
+        getNode: jest.fn((id: string) => ({
+          id,
+        })),
+        ...args,
+      };
+
+      const createContentDigest = jest.fn((content: any) =>
+        createHash('sha256').update(JSON.stringify(content)).digest('hex'),
+      );
       const createNodeId = jest.fn((id) => id);
 
       const manager = new NodeManager({
@@ -211,9 +270,10 @@ describe('cl:NodeManager', () => {
         cache: caching({ store: 'memory', ttl: 0 }),
         createContentDigest,
         createNodeId,
+        getNode,
         reporter: { info: jest.fn() },
       } as any);
-      const originalDatabase = generateDatabase({
+      const database = generateDatabase({
         databaseID: 'database_with_pages',
         pages: [
           generatePage({
@@ -228,10 +288,10 @@ describe('cl:NodeManager', () => {
       });
 
       // first call
-      await manager.update([originalDatabase, ...originalDatabase.pages]);
+      await manager.update([database, ...database.pages]);
 
-      expect(createNode).toBeCalledTimes(3);
-      expect(touchNode).toBeCalledTimes(3);
+      expect(createNode).toBeCalledTimes(3); // 3 new nodes: database_with_pages, page_0, page_1
+      expect(touchNode).toBeCalledTimes(0); // everything is new
       expect(deleteNode).toBeCalledTimes(0);
 
       // reset
@@ -239,22 +299,133 @@ describe('cl:NodeManager', () => {
       touchNode.mockClear();
       deleteNode.mockClear();
 
-      // second call with data updated
-      const updatedDatabase = generateDatabase({
+      return { manager, createNode, deleteNode, touchNode };
+    };
+
+    it('send the correct number of requests after a page is updated ', async () => {
+      const { manager, createNode, deleteNode, touchNode } =
+        await createDummyNode();
+
+      const database = generateDatabase({
         databaseID: 'database_with_pages',
         pages: [
           generatePage({
             pageID: 'page_0',
-            title: 'New Title',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+          generatePage({
+            pageID: 'page_1',
             parent: { type: 'database_id', database_id: 'database_with_pages' },
             lastEditedTime: '2020-12-31T23:59:59Z',
           }),
         ],
       });
-      await manager.update([updatedDatabase, ...updatedDatabase.pages]);
-      expect(createNode).toBeCalledTimes(2);
-      expect(touchNode).toBeCalledTimes(2);
-      expect(deleteNode).toBeCalledTimes(1);
+      await manager.update([database, ...database.pages]);
+      expect(createNode).toBeCalledTimes(1); // 1 updated node: page_1 (lastEditedTime changed)
+      expect(touchNode).toBeCalledTimes(2); // keeping database_with_pages and page_0
+      expect(deleteNode).toBeCalledTimes(0);
+    });
+
+    it('send the correct number of requests after a page is deleted', async () => {
+      const { manager, createNode, deleteNode, touchNode } =
+        await createDummyNode();
+
+      const database = generateDatabase({
+        databaseID: 'database_with_pages',
+        lastEditedTime: '2020-12-31T23:59:59Z',
+        pages: [
+          generatePage({
+            pageID: 'page_0',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+        ],
+      });
+      await manager.update([database, ...database.pages]);
+      expect(createNode).toBeCalledTimes(1); // 1 updated node: database_with_pages (lastEditedTime changed)
+      expect(touchNode).toBeCalledTimes(1); // keeping page_0
+      expect(deleteNode).toBeCalledTimes(1); // removed page_1
+    });
+
+    it('send the correct number of requests after a new page is added', async () => {
+      const { manager, createNode, deleteNode, touchNode } =
+        await createDummyNode();
+
+      const database = generateDatabase({
+        databaseID: 'database_with_pages',
+        lastEditedTime: '2020-12-31T23:59:59Z',
+        pages: [
+          generatePage({
+            pageID: 'page_0',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+          generatePage({
+            pageID: 'page_1',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+          generatePage({
+            pageID: 'page_2',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+        ],
+      });
+      await manager.update([database, ...database.pages]);
+      expect(createNode).toBeCalledTimes(2); // 1 updated node: database_with_pages (lastEditedTime changed) + 1 new node: page_2
+      expect(touchNode).toBeCalledTimes(2); // keeping everything else
+      expect(deleteNode).toBeCalledTimes(0);
+    });
+
+    it('send the correct number of requests after a database is updated', async () => {
+      const { manager, createNode, deleteNode, touchNode } =
+        await createDummyNode();
+
+      // forth call with database updated
+      const databaseUpdated = generateDatabase({
+        databaseID: 'database_with_pages',
+        title: 'New Title',
+        lastEditedTime: '2020-12-31T23:59:59Z',
+        pages: [
+          generatePage({
+            pageID: 'page_0',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+          generatePage({
+            pageID: 'page_1',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+        ],
+      });
+      await manager.update([databaseUpdated, ...databaseUpdated.pages]);
+      expect(createNode).toBeCalledTimes(1); // 1 updated node: database_with_pages (title changed)
+      expect(touchNode).toBeCalledTimes(2); // keeping page_0, page_1
+      expect(deleteNode).toBeCalledTimes(0);
+    });
+
+    it('recreate nodes from cache for any missing nodes due to updates on the parents', async () => {
+      const { manager, createNode, deleteNode, touchNode } =
+        await createDummyNode({
+          // mock that all existing nodes got garbage collected
+          getNode: jest.fn(() => undefined),
+        });
+
+      // forth call with database updated
+      const databaseUpdated = generateDatabase({
+        databaseID: 'database_with_pages',
+        lastEditedTime: '2020-12-31T23:59:59Z',
+        pages: [
+          generatePage({
+            pageID: 'page_0',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+          generatePage({
+            pageID: 'page_1',
+            parent: { type: 'database_id', database_id: 'database_with_pages' },
+          }),
+        ],
+      });
+      await manager.update([databaseUpdated, ...databaseUpdated.pages]);
+      expect(createNode).toBeCalledTimes(3); // 1 updated node: database_with_pages + 2 recreated nodes: page_0, page_1
+      expect(touchNode).toBeCalledTimes(0); // no touch because all nodes are missing
+      expect(deleteNode).toBeCalledTimes(0);
     });
   });
 });
