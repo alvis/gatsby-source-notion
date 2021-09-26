@@ -38,7 +38,6 @@ type NormalisedEntity<E extends FullEntity = FullEntity> = E extends any
   ? Omit<E, 'parent'> & {
       parent: Link | null;
       children: Link[];
-      digest: string;
     }
   : never;
 
@@ -50,6 +49,7 @@ export class NodeManager {
   private createNodeId: NodePluginArgs['createNodeId'];
   private createContentDigest: NodePluginArgs['createContentDigest'];
   private cache: NodePluginArgs['cache'];
+  private getNode: NodePluginArgs['getNode'];
   private reporter: NodePluginArgs['reporter'];
 
   /**
@@ -63,6 +63,7 @@ export class NodeManager {
       cache,
       createContentDigest,
       createNodeId,
+      getNode,
       reporter,
     } = args;
     /* eslint-enable */
@@ -73,6 +74,7 @@ export class NodeManager {
     this.touchNode = touchNode;
     this.createNodeId = createNodeId;
     this.createContentDigest = createContentDigest;
+    this.getNode = getNode;
     this.reporter = reporter;
   }
 
@@ -82,29 +84,28 @@ export class NodeManager {
    */
   public async update(entities: FullEntity[]): Promise<void> {
     // get entries with relationship build-in
-    const oldMap = new Map<string, NormalisedEntity>(
-      (await this.cache.get('entityMap')) ?? [],
+    const old = new Map<string, NodeInput>(
+      (await this.cache.get('nodeGraph')) ?? [],
     );
-    const newMap = computeEntityMap(entities, this.createContentDigest);
+    const current = this.computeNodeGraph(entities);
+    const { added, updated, removed, unchanged } = computeChanges(old, current);
 
     // for the usage of createNode
     // see https://www.gatsbyjs.com/docs/reference/config-files/actions/#createNode
-    await this.addNodes(this.findNewEntities(oldMap, newMap));
-    this.updateNodes(this.findUpdatedEntities(oldMap, newMap));
-    this.removeNodes(this.findRemovedEntities(oldMap, newMap));
-    this.touchNodes([...newMap.values()]);
+    await this.addNodes(added);
+    await this.updateNodes(updated);
+    this.removeNodes(removed);
+    this.touchNodes(unchanged);
 
-    await this.cache.set('entityMap', [...newMap.entries()]);
+    await this.cache.set('nodeGraph', [...current.entries()]);
   }
 
   /**
    * add new nodes
    * @param added new nodes to be added
    */
-  private async addNodes(added: NormalisedEntity[]): Promise<void> {
-    for (const entity of added) {
-      const node = this.nodifyEntity(entity);
-
+  private async addNodes(added: NodeInput[]): Promise<void> {
+    for (const node of added) {
       // DEBT: disable a false alarm from eslint as currently Gatsby is exporting an incorrect type
       //       this should be removed when https://github.com/gatsbyjs/gatsby/pull/32522 is merged
       /* eslint-disable @typescript-eslint/await-thenable */
@@ -123,9 +124,14 @@ export class NodeManager {
    * update existing nodes
    * @param updated updated nodes
    */
-  private updateNodes(updated: NormalisedEntity[]): void {
-    for (const entity of updated) {
-      this.createNode(this.nodifyEntity(entity));
+  private async updateNodes(updated: NodeInput[]): Promise<void> {
+    for (const node of updated) {
+      // DEBT: disable a false alarm from eslint as currently Gatsby is exporting an incorrect type
+      //       this should be removed when https://github.com/gatsbyjs/gatsby/pull/32522 is merged
+      /* eslint-disable @typescript-eslint/await-thenable */
+      // update the node
+      await this.createNode(node);
+      /* eslint-enable */
     }
 
     // don't be noisy if there's nothing new happen
@@ -138,9 +144,9 @@ export class NodeManager {
    * remove old nodes
    * @param removed nodes to be removed
    */
-  private removeNodes(removed: NormalisedEntity[]): void {
-    for (const entity of removed) {
-      this.deleteNode(this.nodifyEntity(entity));
+  private removeNodes(removed: NodeInput[]): void {
+    for (const node of removed) {
+      this.deleteNode(node);
     }
 
     // don't be noisy if there's nothing new happen
@@ -150,22 +156,47 @@ export class NodeManager {
   }
 
   /**
-   * keep all current notion nodes alive
-   * @param entities list of current notion entities
+   * keep unchanged notion nodes alive
+   * @param untouched list of current notion entities
    */
-  private touchNodes(entities: NormalisedEntity[]): void {
-    for (const entity of entities) {
-      const node = this.nodifyEntity(entity);
-      this.touchNode({
-        id: node.id,
-        internal: {
-          type: node.internal.type,
-          contentDigest: node.internal.contentDigest,
-        },
-      });
+  private touchNodes(untouched: NodeInput[]): void {
+    for (const node of untouched) {
+      // DEBT: disable a false alarm from eslint as currently Gatsby is exporting an incorrect type
+      //       this should be removed when https://github.com/gatsbyjs/gatsby/pull/32522 is merged
+      /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
+      if (this.getNode(node.id)) {
+        // just make a light-touched operation if the node is still alive
+        this.touchNode({
+          id: node.id,
+          internal: {
+            type: node.internal.type,
+            contentDigest: node.internal.contentDigest,
+          },
+        });
+      } else {
+        // recreate it again if somehow it's missing
+        this.createNode(node);
+      }
     }
 
-    this.reporter.info(`[${name}] processed ${entities.length} nodes`);
+    this.reporter.info(`[${name}] keeping ${untouched.length} nodes`);
+  }
+
+  /**
+   * convert entities into gatsby node with full parent-child relationship
+   * @param entities all sort of entities including database and page
+   * @returns a map of gatsby nodes with parent and children linked
+   */
+  private computeNodeGraph(entities: FullEntity[]): Map<string, NodeInput> {
+    // first compute the graph with entities before converting to nodes
+    const entityMap = computeEntityMap(entities);
+
+    return new Map<string, NodeInput>(
+      [...entityMap.entries()].map(([id, entity]) => [
+        id,
+        this.nodifyEntity(entity),
+      ]),
+    );
   }
 
   /**
@@ -204,7 +235,7 @@ export class NodeManager {
     entity: NormalisedEntity,
     internal: Omit<NodeInput['internal'], 'contentDigest'> & { type: T },
   ): ContentNode<T> {
-    return {
+    const basis = {
       id: this.createNodeId(`${entity.object}:${entity.id}`),
       ref: entity.id,
       createdTime: entity.created_time,
@@ -217,75 +248,18 @@ export class NodeManager {
       children: entity.children.map(({ object, id }) =>
         this.createNodeId(`${object}:${id}`),
       ),
+    };
+
+    const excludedKeys = ['parent', 'children', 'internal'];
+    const contentDigest = this.createContentDigest(omit(basis, excludedKeys));
+
+    return {
+      ...basis,
       internal: {
-        contentDigest: entity.digest,
+        contentDigest,
         ...internal,
       },
     };
-  }
-
-  /**
-   * find new entities
-   * @param oldMap the old entity map generated from earlier data
-   * @param newMap the new entity map computed from up-to-date data from Notion
-   * @returns a list of new entities
-   */
-  private findNewEntities(
-    oldMap: Map<string, NormalisedEntity>,
-    newMap: Map<string, NormalisedEntity>,
-  ): NormalisedEntity[] {
-    const added: NormalisedEntity[] = [];
-    for (const [id, newEntity] of newMap.entries()) {
-      const oldEntity = oldMap.get(id);
-      if (!oldEntity) {
-        added.push(newEntity);
-      }
-    }
-
-    return added;
-  }
-
-  /**
-   * find removed entities
-   * @param oldMap the old entity map generated from earlier data
-   * @param newMap the new entity map computed from up-to-date data from Notion
-   * @returns a list of removed entities
-   */
-  private findRemovedEntities(
-    oldMap: Map<string, NormalisedEntity>,
-    newMap: Map<string, NormalisedEntity>,
-  ): NormalisedEntity[] {
-    const removed: NormalisedEntity[] = [];
-
-    for (const [id, oldEntity] of oldMap.entries()) {
-      if (!newMap.has(id)) {
-        removed.push(oldEntity);
-      }
-    }
-
-    return removed;
-  }
-
-  /**
-   * find updated entities
-   * @param oldMap the old entity map generated from earlier data
-   * @param newMap the new entity map computed from up-to-date data from Notion
-   * @returns a list of updated entities
-   */
-  private findUpdatedEntities(
-    oldMap: Map<string, NormalisedEntity>,
-    newMap: Map<string, NormalisedEntity>,
-  ): NormalisedEntity[] {
-    const updated: NormalisedEntity[] = [];
-
-    for (const [id, newEntity] of newMap.entries()) {
-      const oldEntity = oldMap.get(id);
-      if (oldEntity && oldEntity.digest !== newEntity.digest) {
-        updated.push(newEntity);
-      }
-    }
-
-    return updated;
   }
 
   /**
@@ -307,14 +281,43 @@ export class NodeManager {
 }
 
 /**
+ * compute changes between two node graphs
+ * @param old the old graph
+ * @param current the latest graph
+ * @returns a map of nodes in different states
+ */
+export function computeChanges(
+  old: Map<string, NodeInput>,
+  current: Map<string, NodeInput>,
+): Record<'added' | 'updated' | 'removed' | 'unchanged', NodeInput[]> {
+  const added = [...current.entries()].filter(([id]) => !old.has(id));
+  const removed = [...old.entries()].filter(([id]) => !current.has(id));
+
+  const bothExists = [...current.entries()].filter(([id]) => old.has(id));
+  const updated = bothExists.filter(
+    ([id, node]) =>
+      old.get(id)!.internal.contentDigest !== node.internal.contentDigest,
+  );
+  const unchanged = bothExists.filter(
+    ([id, node]) =>
+      old.get(id)!.internal.contentDigest === node.internal.contentDigest,
+  );
+
+  return {
+    added: added.map(([, node]) => node),
+    updated: updated.map(([, node]) => node),
+    removed: removed.map(([, node]) => node),
+    unchanged: unchanged.map(([, node]) => node),
+  };
+}
+
+/**
  * attach parent-child relationship to gatsby node
  * @param entities all sort of entities including database and page
- * @param hashFn a hash function for generating the content digest
  * @returns a map of entities with parent and children linked
  */
 export function computeEntityMap(
   entities: FullEntity[],
-  hashFn: (content: string | FullEntity) => string,
 ): Map<string, NormalisedEntity> {
   // create a new working set
   const map = new Map<string, NormalisedEntity>();
@@ -323,7 +326,6 @@ export function computeEntityMap(
       ...entity,
       parent: normaliseParent(entity.parent),
       children: [],
-      digest: hashFn(entity),
     });
   }
 
@@ -365,4 +367,19 @@ export function normaliseParent(parent: FullEntity['parent']): Link | null {
     default:
       throw new TypeError(`unknown parent`);
   }
+}
+
+/**
+ * return an object with the specified keys omitted
+ * @param record the record to be converted
+ * @param keys a list of keys to be omitted
+ * @returns an object with the specified keys omitted
+ */
+function omit(
+  record: Record<string, unknown>,
+  keys: string[],
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(record).filter(([key]) => !keys.includes(key)),
+  );
 }
