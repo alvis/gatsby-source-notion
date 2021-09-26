@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.4](https://github.com/alvis/gatsby-source-notion/compare/v1.0.3...v1.0.4) (2021-09-26)
+
+
+### 🐛 Bug Fixes
+
+* ensure that a page update won't propagate to its database node ([c97d301](https://github.com/alvis/gatsby-source-notion/commit/c97d30160d16bf93657f91538e3520a310eee38a))
+
+
+### ⚙️ Continuous Integrations
+
+* add an automated vulnerability test by Github CodeQL ([8c9d178](https://github.com/alvis/gatsby-source-notion/commit/8c9d17896d04819c7a93f0f123102c33bcb6278b))
+
+
+### 💎 Styles
+
+* fix some formatting issues on the import statements ([2c7e4ff](https://github.com/alvis/gatsby-source-notion/commit/2c7e4ff14b624f5767ca88d77c878fabcafe4095))
+
+
+
 ## [1.0.3](https://github.com/alvis/gatsby-source-notion/compare/v1.0.2...v1.0.3) (2021-09-04)
 
 
