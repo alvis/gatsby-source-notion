@@ -1,0 +1,17 @@
+{
+  "preset": "presetter-preset-strict",
+  "config": {
+    "gitignore": ["/.cache", "/public", "/screenshots", "/types/~*", "/videos"],
+    "tsconfig": {
+      "compilerOptions": {
+        "lib": ["DOM"],
+        "types": ["cypress"]
+      }
+    }
+  },
+  "variable": {
+    "source": "src",
+    "output": "public"
+  },
+  "ignores": [".babelrc.json"]
+}

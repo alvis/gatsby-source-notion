@@ -24,6 +24,10 @@
     "type": "git",
     "url": "git+https://github.com/alvis/gatsby-source-notion.git"
   },
+  "workspaces": [
+    ".",
+    "e2e"
+  ],
   "scripts": {
     "build": "run build",
     "coverage": "run coverage",
@@ -32,6 +36,7 @@
     "prepublishOnly": "run prepublishOnly",
     "release": "run release --",
     "test": "run test --",
+    "test:e2e": "run build && npm --workspace e2e run test",
     "watch": "run watch"
   },
   "peerDependencies": {

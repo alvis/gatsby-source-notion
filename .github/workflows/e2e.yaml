@@ -1,0 +1,43 @@
+name: e2e test
+
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [16]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: use node ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+      - name: install dependencies
+        uses: cypress-io/github-action@v2
+        with:
+          runTests: false
+      - name: print cypress info
+        run: npx cypress info
+      - name: test on chrome
+        uses: cypress-io/github-action@v2
+        with:
+          working-directory: e2e
+          browser: chrome
+          record: true
+          build: true
+          install: false
+          start: npm run start:gatsby
+          wait-on: http://localhost:8000
+        env:
+          CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GATSBY_NOTION_TOKEN: ${{ secrets.GATSBY_NOTION_TOKEN }}
+          GATSBY_NOTION_DATABASES: ${{ secrets.GATSBY_NOTION_DATABASES }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: '@cypress/github-action'

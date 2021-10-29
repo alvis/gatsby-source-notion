@@ -1,0 +1,10 @@
+{
+  "downloadsFolder": "downloads",
+  "fixturesFolder": "fixtures",
+  "integrationFolder": "integration",
+  "pluginsFile": false,
+  "screenshotsFolder": "screenshots",
+  "supportFile": false,
+  "testFiles": "**/*.ts",
+  "videosFolder": "videos"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "e2e",
+  "version": "0.0.0",
+  "description": "end to end test for the plugin",
+  "private": true,
+  "scripts": {
+    "build": "ts-node-cwd --transpile-only -- ../node_modules/.bin/gatsby build --verbose",
+    "prepare": "presetter bootstrap",
+    "start": "start-server-and-test start:gatsby 8000 \"cypress open\"",
+    "start:gatsby": "cross-env CYPRESS_SUPPORT=y ts-node-cwd --transpile-only -- ../node_modules/.bin/gatsby develop --port 8000 --verbose",
+    "test": "start-server-and-test start:gatsby 8000 \"cypress run\""
+  },
+  "devDependencies": {
+    "cypress": "^8.7.0",
+    "gatsby-plugin-graphql-codegen": "^3.0.0",
+    "presetter": "^3.0.0",
+    "presetter-preset-strict": "^3.0.0",
+    "start-server-and-test": "^1.0.0"
+  },
+  "dependencies": {
+    "gatsby": "^3.0.0-next.0"
+  }
+}
