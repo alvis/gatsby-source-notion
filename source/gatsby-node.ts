@@ -51,7 +51,7 @@ export const onPreBootstrap: NonNullable<GatsbyNode['onPreBootstrap']> = async (
   const { reporter } = args;
 
   const MINIMUM_SUPPORTED_VERSION = 3;
-  if (Number(gatsbyVersion.split('.')[0]) !== MINIMUM_SUPPORTED_VERSION) {
+  if (Number(gatsbyVersion.split('.')[0]) < MINIMUM_SUPPORTED_VERSION) {
     reporter.panic(`[${name}] unsupported gatsby version detected`);
   }
 };

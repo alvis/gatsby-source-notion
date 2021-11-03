@@ -18,6 +18,6 @@
     "start-server-and-test": "^1.0.0"
   },
   "dependencies": {
-    "gatsby": "^3.0.0-next.0"
+    "gatsby": "^4.0.0"
   }
 }

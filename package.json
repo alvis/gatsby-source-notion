@@ -40,12 +40,12 @@
     "watch": "run watch"
   },
   "peerDependencies": {
-    "gatsby": "^3.0.0-next.0"
+    "gatsby": ">=3.0.0"
   },
   "devDependencies": {
     "@types/cache-manager": "^3.4.0",
     "@types/js-yaml": "^4.0.0",
-    "gatsby": "^3.0.0-next.0",
+    "gatsby": "^4.0.0",
     "nock": "^13.1.0",
     "presetter": "^3.0.0",
     "presetter-preset-strict": "^3.0.0"

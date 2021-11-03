@@ -74,7 +74,7 @@ describe('fn:onPreBootstrap', () => {
 
   it('fail with gatsby earlier than v3', testVersion('2.0.0', false));
   it('pass with gatsby v3', testVersion('3.0.0', true));
-  it('fail with future gatsby after v3', testVersion('4.0.0', false));
+  it('pass with future gatsby after v3', testVersion('4.0.0', true));
 });
 
 describe('fn:onCreateDevServer', () => {
