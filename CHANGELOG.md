@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.5](https://github.com/alvis/gatsby-source-notion/compare/v1.0.4...v1.0.5) (2021-11-04)
+
+
+### 🐛 Bug Fixes
+
+* support gatsby v4 ([61e6094](https://github.com/alvis/gatsby-source-notion/commit/61e6094b53a18eecd50961f8bb2abb3fec5aa906))
+
+
+### 🛠 Builds
+
+* update presetter to v3 ([77a95cb](https://github.com/alvis/gatsby-source-notion/commit/77a95cb74b43cc0932fd23a9d82364d0242fd185))
+
+
+### 🚨 Tests
+
+* provide an end to end test for the plugin ([b014e02](https://github.com/alvis/gatsby-source-notion/commit/b014e02738d99f5917eefa3b64b74af7082c84d6))
+
+
+### ⚙️ Continuous Integrations
+
+* update node setup ([5514eb9](https://github.com/alvis/gatsby-source-notion/commit/5514eb91c2cd9bc16a7aeceda9d693a6d84609a8))
+
+
+
 ## [1.0.4](https://github.com/alvis/gatsby-source-notion/compare/v1.0.3...v1.0.4) (2021-09-26)
 
 
