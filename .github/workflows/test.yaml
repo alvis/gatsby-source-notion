@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node: [12, 14, 15, 16]
+        node: [12, 14, 16, 17]
     steps:
       - name: checkout
         uses: actions/checkout@v2
@@ -18,11 +18,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-      - name: cache node_modules
-        uses: actions/cache@v1
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node }}-dependencies-${{ hashFiles('package-lock.json') }}
+          cache: npm
       - name: install dependencies
         run: npm ci
       - name: run test
