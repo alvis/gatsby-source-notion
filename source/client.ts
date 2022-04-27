@@ -20,9 +20,6 @@ import { dump } from 'js-yaml';
 import { markdown } from '#markdown';
 import { getPropertyContent } from '#property';
 
-import type { Cache } from 'cache-manager';
-import type { Got, OptionsOfJSONResponseBody, Response } from 'got';
-
 import type {
   Block,
   Database,
@@ -33,6 +30,9 @@ import type {
   List,
   Page,
 } from './types';
+import type { Cache } from 'cache-manager';
+import type { Got, OptionsOfJSONResponseBody, Response } from 'got';
+
 
 interface Pagination extends Record<string, number | string | undefined> {
   /* eslint-disable @typescript-eslint/naming-convention */

@@ -39,6 +39,34 @@ interface ParentWorkspace {
 }
 
 /*
+ * File
+ */
+
+interface UploadedFile {
+  type: 'file';
+  file: {
+    url: string,
+  }
+}
+
+interface ExternalFile {
+  type: 'external';
+  external: {
+    url: string,
+    expiry_time?: string
+  }
+}
+
+interface Emoji {
+  type: 'emoji';
+  emoji: string
+}
+
+export type File = UploadedFile | ExternalFile;
+
+export type Icon = Emoji | File;
+
+/*
  * Page
  */
 
@@ -49,6 +77,8 @@ export interface Page {
   created_time: string;
   last_edited_time: string;
   archived: boolean;
+  icon?: Icon;
+  cover?: File;
   properties: PropertyValueMap;
   url: string;
 }
@@ -69,7 +99,10 @@ export interface Database {
   parent: ParentPage | ParentWorkspace;
   created_time: string;
   last_edited_time: string;
+  archived: boolean;
   title: RichText[];
+  icon?: Icon;
+  cover?: File;
   properties: PropertyMetaMap;
 }
 

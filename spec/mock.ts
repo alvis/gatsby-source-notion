@@ -93,6 +93,7 @@ export function mockDatabase(
     id: databaseID,
     created_time: '2020-01-01T00:00:00Z',
     last_edited_time: '2020-01-01T00:00:00Z',
+    archived: false,
     parent: {
       type: 'workspace',
     },

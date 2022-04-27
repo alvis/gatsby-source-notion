@@ -177,6 +177,7 @@ describe('fn:sync', () => {
         created_time: '2020-01-01T00:00:00Z',
         id: 'database',
         last_edited_time: '2020-01-01T00:00:00Z',
+        archived: false,
         object: 'database',
         pages: [],
         parent: { type: 'workspace' },

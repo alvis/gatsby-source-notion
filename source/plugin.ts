@@ -16,10 +16,10 @@
 import { DEFAULT_TTL, Notion } from '#client';
 import { NodeManager } from '#node';
 
-import type { NodePluginArgs, PluginOptions } from 'gatsby';
 
 import type { NotionOptions, NotionTTL } from '#client';
 import type { FullDatabase, FullPage } from '#types';
+import type { NodePluginArgs, PluginOptions } from 'gatsby';
 
 /** options for the source plugin */
 export interface PluginConfig extends PluginOptions, NotionOptions {

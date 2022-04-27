@@ -15,14 +15,17 @@
 
 import { name } from '#.';
 
-import type { FullDatabase, FullPage } from '#types';
+import type { File, FullDatabase, FullPage, Icon } from '#types';
 import type { NodeInput, NodePluginArgs } from 'gatsby';
 
 interface ContentNode<Type extends string> extends NodeInput {
   ref: string;
   createdTime: string;
   lastEditedTime: string;
+  archived: boolean;
   title: string;
+  icon?: Icon,
+  cover?: File,
   internal: {
     type: Type;
   } & NodeInput['internal'];
@@ -241,7 +244,10 @@ export class NodeManager {
       createdTime: entity.created_time,
       lastEditedTime: entity.last_edited_time,
       properties: entity.properties,
+      archived: entity.archived,
       title: entity.title,
+      icon: entity.icon,
+      cover: entity.cover,
       parent: entity.parent
         ? this.createNodeId(`${entity.parent.object}:${entity.parent.id}`)
         : null,

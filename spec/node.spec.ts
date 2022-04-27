@@ -44,6 +44,7 @@ function generateDatabase({
     id: databaseID,
     created_time: '2020-01-01T00:00:00Z',
     last_edited_time: lastEditedTime,
+    archived: false,
     parent,
     title,
     properties: {
