@@ -85,7 +85,9 @@ export class NodeManager {
   public async update(entities: FullEntity[]): Promise<void> {
     // get entries with relationship build-in
     const old = new Map<string, NodeInput>(
-      (await this.cache.get('nodeGraph')) ?? [],
+      ((await this.cache.get('nodeGraph')) as
+        | Array<[string, NodeInput]>
+        | undefined) ?? [],
     );
     const current = this.computeNodeGraph(entities);
     const { added, updated, removed, unchanged } = computeChanges(old, current);

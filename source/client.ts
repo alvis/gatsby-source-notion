@@ -106,8 +106,10 @@ export class Notion {
     this.client = got.extend({
       prefixUrl: 'https://api.notion.com/v1',
       headers: {
+        /* eslint-disable @typescript-eslint/naming-convention */
         'authorization': `Bearer ${token}`,
         'notion-version': version,
+        /* eslint-enable @typescript-eslint/naming-convention */
       },
       responseType: 'json',
     });
