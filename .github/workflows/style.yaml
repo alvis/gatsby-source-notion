@@ -3,7 +3,11 @@ name: code style
 on:
   push:
     branches:
-      - '**'
+      - master
+  pull_request_target:
+    branches:
+      - master
+
 jobs:
   style:
     runs-on: ${{ matrix.os }}
