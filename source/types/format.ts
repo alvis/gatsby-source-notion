@@ -17,7 +17,7 @@ import type { DateValue } from './property';
 import type { User } from './user';
 
 /*
- * Colour
+ * Color
  */
 
 export type Color =

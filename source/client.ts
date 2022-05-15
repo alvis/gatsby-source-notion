@@ -147,7 +147,7 @@ export class Notion {
       ...body,
       title: body.title.map((text) => text.plain_text).join(''),
       pages: await Promise.all(
-        pages.map(this.normalisePageAndCache.bind(this)),
+        pages.map(this.normalizePageAndCache.bind(this)),
       ),
     };
   }
@@ -167,7 +167,7 @@ export class Notion {
       { ttl: this.ttl.pageMeta },
     );
 
-    return this.normalisePageAndCache(body);
+    return this.normalizePageAndCache(body);
   }
 
   /**
@@ -241,7 +241,7 @@ export class Notion {
    * @param page the page object returned from Notion API
    * @returns page with title and its content
    */
-  private async normalisePage(page: Page): Promise<FullPage> {
+  private async normalizePage(page: Page): Promise<FullPage> {
     // NOTE: API calls will be made for getting blocks as no cache will be set
     const blocks = await this.getBlocks(page.id);
     // Name for a page in a database, title for an ordinary page
@@ -274,11 +274,11 @@ export class Notion {
   }
 
   /**
-   * normalised a page, or get it from the cache
+   * normalized a page, or get it from the cache
    * @param page the page object returned from Notion API
    * @returns page with title and its content
    */
-  private async normalisePageAndCache(page: Page): Promise<FullPage> {
+  private async normalizePageAndCache(page: Page): Promise<FullPage> {
     const cacheKey = `page:${page.id}:content`;
     const cachedPage = await this.cache.get<FullPage>(cacheKey);
 
@@ -290,16 +290,16 @@ export class Notion {
     ) {
       return cachedPage;
     } else {
-      const normalisedPage = await this.normalisePage(page);
+      const normalizedPage = await this.normalizePage(page);
       await this.cache.set(
         cacheKey,
-        normalisedPage,
+        normalizedPage,
         // NOTE: by default the cache would last forever and
         //       therefore no API call will be make unless the last_edit_time has changed
         { ttl: this.ttl.pageContent },
       );
 
-      return normalisedPage;
+      return normalizedPage;
     }
   }
 }

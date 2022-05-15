@@ -19,7 +19,7 @@ import { createHash } from 'crypto';
 import {
   computeChanges,
   computeEntityMap,
-  normaliseParent,
+  normalizeParent,
   NodeManager,
 } from '#node';
 
@@ -135,10 +135,10 @@ describe('fn:computeEntityMap', () => {
     });
 
     const map = computeEntityMap([workspaceDatabase]);
-    const normalised = map.get('database:database_under_a_workspace');
-    expect(normalised!.id).toEqual('database_under_a_workspace');
-    expect(normalised!.parent).toEqual(null);
-    expect(normalised!.children).toEqual([]);
+    const normalized = map.get('database:database_under_a_workspace');
+    expect(normalized!.id).toEqual('database_under_a_workspace');
+    expect(normalized!.parent).toEqual(null);
+    expect(normalized!.children).toEqual([]);
   });
 
   it('pass even the page parent is missing', () => {
@@ -148,10 +148,10 @@ describe('fn:computeEntityMap', () => {
     });
 
     const map = computeEntityMap([pageDatabase]);
-    const normalised = map.get('database:database_under_a_page');
-    expect(normalised!.id).toEqual('database_under_a_page');
-    expect(normalised!.parent).toEqual({ object: 'page', id: 'parent-page' });
-    expect(normalised!.children).toEqual([]);
+    const normalized = map.get('database:database_under_a_page');
+    expect(normalized!.id).toEqual('database_under_a_page');
+    expect(normalized!.parent).toEqual({ object: 'page', id: 'parent-page' });
+    expect(normalized!.children).toEqual([]);
   });
 
   it('pass with a dangled page without its parent database given in the config', () => {
@@ -161,10 +161,10 @@ describe('fn:computeEntityMap', () => {
     });
 
     const map = computeEntityMap([dangledPage]);
-    const normalised = map.get('page:dangled_page');
-    expect(normalised!.id).toEqual('dangled_page');
-    expect(normalised!.parent).toEqual({ object: 'database', id: 'missing' });
-    expect(normalised!.children).toEqual([]);
+    const normalized = map.get('page:dangled_page');
+    expect(normalized!.id).toEqual('dangled_page');
+    expect(normalized!.parent).toEqual({ object: 'database', id: 'missing' });
+    expect(normalized!.children).toEqual([]);
   });
 
   it('build up a map with parent-children relation included', () => {
@@ -186,39 +186,39 @@ describe('fn:computeEntityMap', () => {
     const map = computeEntityMap([database, ...database.pages, page, subpage]);
     expect(map.size).toEqual(4);
 
-    const normalisedDB = map.get('database:database_with_pages');
-    expect(normalisedDB!.id).toEqual('database_with_pages');
-    expect(normalisedDB!.parent).toEqual(null);
-    expect(normalisedDB!.children).toEqual([{ object: 'page', id: 'page_0' }]);
+    const normalizedDB = map.get('database:database_with_pages');
+    expect(normalizedDB!.id).toEqual('database_with_pages');
+    expect(normalizedDB!.parent).toEqual(null);
+    expect(normalizedDB!.children).toEqual([{ object: 'page', id: 'page_0' }]);
 
-    const normalisedDBPage = map.get('page:page_0');
-    expect(normalisedDBPage!.id).toEqual('page_0');
-    expect(normalisedDBPage!.parent).toEqual({
+    const normalizedDBPage = map.get('page:page_0');
+    expect(normalizedDBPage!.id).toEqual('page_0');
+    expect(normalizedDBPage!.parent).toEqual({
       id: 'database_with_pages',
       object: 'database',
     });
-    expect(normalisedDBPage!.children).toEqual([]);
+    expect(normalizedDBPage!.children).toEqual([]);
 
-    const normalisedPage = map.get('page:page_with_pages');
-    expect(normalisedPage!.id).toEqual('page_with_pages');
-    expect(normalisedPage!.parent).toEqual(null);
-    expect(normalisedPage!.children).toEqual([
+    const normalizedPage = map.get('page:page_with_pages');
+    expect(normalizedPage!.id).toEqual('page_with_pages');
+    expect(normalizedPage!.parent).toEqual(null);
+    expect(normalizedPage!.children).toEqual([
       { id: 'subpage', object: 'page' },
     ]);
 
-    const normalisedSubpage = map.get('page:subpage');
-    expect(normalisedSubpage!.id).toEqual('subpage');
-    expect(normalisedSubpage!.parent).toEqual({
+    const normalizedSubpage = map.get('page:subpage');
+    expect(normalizedSubpage!.id).toEqual('subpage');
+    expect(normalizedSubpage!.parent).toEqual({
       id: 'page_with_pages',
       object: 'page',
     });
-    expect(normalisedSubpage!.children).toEqual([]);
+    expect(normalizedSubpage!.children).toEqual([]);
   });
 });
 
-describe('fn:normaliseParent', () => {
+describe('fn:normalizeParent', () => {
   it('transform a database parent', () => {
-    expect(normaliseParent({ type: 'database_id', database_id: 'id' })).toEqual(
+    expect(normalizeParent({ type: 'database_id', database_id: 'id' })).toEqual(
       {
         object: 'database',
         id: 'id',
@@ -227,19 +227,19 @@ describe('fn:normaliseParent', () => {
   });
 
   it('transform a page parent', () => {
-    expect(normaliseParent({ type: 'page_id', page_id: 'id' })).toEqual({
+    expect(normalizeParent({ type: 'page_id', page_id: 'id' })).toEqual({
       object: 'page',
       id: 'id',
     });
   });
 
   it('transform a workspace parent', () => {
-    expect(normaliseParent({ type: 'workspace' })).toEqual(null);
+    expect(normalizeParent({ type: 'workspace' })).toEqual(null);
   });
 
   it('warn if an unsupported parented is given', () => {
     // @ts-expect-error
-    expect(() => normaliseParent()).toThrow();
+    expect(() => normalizeParent()).toThrow();
   });
 });
 

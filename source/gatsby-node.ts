@@ -16,7 +16,7 @@
 import { version as gatsbyVersion } from 'gatsby/package.json';
 
 import { name } from '#.';
-import { computePreviewUpdateInterval, normaliseConfig, sync } from '#plugin';
+import { computePreviewUpdateInterval, normalizeConfig, sync } from '#plugin';
 
 import type { GatsbyNode } from 'gatsby';
 
@@ -56,32 +56,33 @@ export const onPreBootstrap: NonNullable<GatsbyNode['onPreBootstrap']> = async (
   }
 };
 
-export const onCreateDevServer: NonNullable<GatsbyNode['onCreateDevServer']> =
-  async (args, partialConfig) => {
-    const pluginConfig = normaliseConfig(partialConfig);
-    const { previewCallRate } = pluginConfig;
+export const onCreateDevServer: NonNullable<
+  GatsbyNode['onCreateDevServer']
+> = async (args, partialConfig) => {
+  const pluginConfig = normalizeConfig(partialConfig);
+  const { previewCallRate } = pluginConfig;
 
-    const previewUpdateInterval = computePreviewUpdateInterval(pluginConfig);
-    if (previewCallRate && previewUpdateInterval) {
-      const scheduleUpdate = (): NodeJS.Timeout =>
-        setTimeout(async () => {
-          // sync entities from notion
-          await sync(args, pluginConfig);
+  const previewUpdateInterval = computePreviewUpdateInterval(pluginConfig);
+  if (previewCallRate && previewUpdateInterval) {
+    const scheduleUpdate = (): NodeJS.Timeout =>
+      setTimeout(async () => {
+        // sync entities from notion
+        await sync(args, pluginConfig);
 
-          // schedule the next update
-          scheduleUpdate();
-        }, previewUpdateInterval);
+        // schedule the next update
+        scheduleUpdate();
+      }, previewUpdateInterval);
 
-      scheduleUpdate();
-    }
-  };
+    scheduleUpdate();
+  }
+};
 
 export const sourceNodes: NonNullable<GatsbyNode['sourceNodes']> = async (
   args,
   partialConfig,
 ) => {
   // sync entities from notion
-  await sync(args, normaliseConfig(partialConfig));
+  await sync(args, normalizeConfig(partialConfig));
 };
 
 /* eslint-enable */

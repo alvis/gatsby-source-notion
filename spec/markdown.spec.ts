@@ -314,7 +314,7 @@ Toggled Content
 
 @Alvis Tang [gatsby-source-notion](https://www.notion.so/8468103a77ae4b1a8fcda89951c9c007) [Link](https://link)
 
-# _**Annotated**_ ~~_**Heading**_~~ with $x^2$ and colour
+# _**Annotated**_ ~~_**Heading**_~~ with $x^2$ and color
 
 # Unsupported
 

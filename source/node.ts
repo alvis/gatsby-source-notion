@@ -34,7 +34,7 @@ interface Link {
 }
 
 type FullEntity = FullDatabase | FullPage;
-type NormalisedEntity<E extends FullEntity = FullEntity> = E extends any
+type NormalizedEntity<E extends FullEntity = FullEntity> = E extends any
   ? Omit<E, 'parent'> & {
       parent: Link | null;
       children: Link[];
@@ -207,7 +207,7 @@ export class NodeManager {
    * @returns a database node
    */
   private createDatabaseNode(
-    database: NormalisedEntity<FullDatabase>,
+    database: NormalizedEntity<FullDatabase>,
   ): ContentNode<'NotionDatabase'> {
     return this.createBaseNode(database, { type: 'NotionDatabase' });
   }
@@ -218,7 +218,7 @@ export class NodeManager {
    * @returns a page node
    */
   private createPageNode(
-    page: NormalisedEntity<FullPage>,
+    page: NormalizedEntity<FullPage>,
   ): ContentNode<'NotionPage'> {
     return this.createBaseNode(page, {
       type: 'NotionPage',
@@ -234,7 +234,7 @@ export class NodeManager {
    * @returns a node with common data
    */
   private createBaseNode<T extends string>(
-    entity: NormalisedEntity,
+    entity: NormalizedEntity,
     internal: Omit<NodeInput['internal'], 'contentDigest'> & { type: T },
   ): ContentNode<T> {
     const basis = {
@@ -269,7 +269,7 @@ export class NodeManager {
    * @param entity the entity to be converted
    * @returns converted entity ready to be consumed by gatsby
    */
-  private nodifyEntity(entity: NormalisedEntity): NodeInput {
+  private nodifyEntity(entity: NormalizedEntity): NodeInput {
     switch (entity.object) {
       case 'database':
         return this.createDatabaseNode(entity);
@@ -320,13 +320,13 @@ export function computeChanges(
  */
 export function computeEntityMap(
   entities: FullEntity[],
-): Map<string, NormalisedEntity> {
+): Map<string, NormalizedEntity> {
   // create a new working set
-  const map = new Map<string, NormalisedEntity>();
+  const map = new Map<string, NormalizedEntity>();
   for (const entity of entities) {
     map.set(`${entity.object}:${entity.id}`, {
       ...entity,
-      parent: normaliseParent(entity.parent),
+      parent: normalizeParent(entity.parent),
       children: [],
     });
   }
@@ -357,7 +357,7 @@ export function computeEntityMap(
  * @param parent the parent field returned from Notion API
  * @returns information about the parent in an unified format
  */
-export function normaliseParent(parent: FullEntity['parent']): Link | null {
+export function normalizeParent(parent: FullEntity['parent']): Link | null {
   switch (parent.type) {
     case 'database_id':
       return { object: 'database', id: parent.database_id };

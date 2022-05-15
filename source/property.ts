@@ -19,7 +19,7 @@ type Date = { start: string; end?: string };
 
 type Person = { name: string; avatar?: string };
 
-type NormalisedValue =
+type NormalizedValue =
   | undefined
   | boolean
   | number
@@ -27,7 +27,7 @@ type NormalisedValue =
   | string[]
   | Date
   | Person
-  | NormalisedValue[];
+  | NormalizedValue[];
 
 /* eslint-disable max-lines-per-function */
 /**
@@ -35,7 +35,7 @@ type NormalisedValue =
  * @param property a property returned from Notion API
  * @returns its content
  */
-export function getPropertyContent(property: PropertyValue): NormalisedValue {
+export function getPropertyContent(property: PropertyValue): NormalizedValue {
   switch (property.type) {
     case 'title':
       return property.title.map((text) => text.plain_text).join('');
@@ -89,7 +89,7 @@ export function getPropertyContent(property: PropertyValue): NormalisedValue {
  */
 function getFormulaPropertyContent(
   formula: FormulaValue['formula'],
-): NormalisedValue {
+): NormalizedValue {
   switch (formula.type) {
     case 'string':
       return formula.string;
@@ -112,7 +112,7 @@ function getFormulaPropertyContent(
  */
 function getRollupPropertyContent(
   rollup: RollupValue['rollup'],
-): NormalisedValue | NormalisedValue[] {
+): NormalizedValue | NormalizedValue[] {
   switch (rollup.type) {
     case 'number':
       return rollup.number;

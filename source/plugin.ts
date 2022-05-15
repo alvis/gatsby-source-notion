@@ -46,7 +46,7 @@ const DEFAULT_PREVIEW_API_RATE = 2.5;
 
 /**
  * compute the update interval for the preview mode
- * @param pluginConfig the normalised plugin config
+ * @param pluginConfig the normalized plugin config
  * @returns the number of milliseconds needed between each sync
  */
 export function computePreviewUpdateInterval(
@@ -75,7 +75,7 @@ export function computePreviewUpdateInterval(
  * @param config pluginConfig passed from the plugin options
  * @returns a complete config
  */
-export function normaliseConfig(
+export function normalizeConfig(
   config: Partial<PluginConfig>,
 ): FullPluginConfig {
   const { previewCallRate = DEFAULT_PREVIEW_API_RATE } = config;
@@ -148,7 +148,7 @@ export async function getPages(
 }
 
 /**
- * synchronise data between Notion and Gatsby
+ * synchronize data between Notion and Gatsby
  * @param args argument passed from Gatsby's Node API
  * @param pluginConfig pluginConfig passed from the plugin options
  */

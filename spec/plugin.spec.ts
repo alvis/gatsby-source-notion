@@ -18,7 +18,7 @@ import {
   computePreviewUpdateInterval,
   getDatabases,
   getPages,
-  normaliseConfig,
+  normalizeConfig,
   sync,
 } from '#plugin';
 import { mockDatabase, mockPage } from './mock';
@@ -53,7 +53,7 @@ describe('fn:computeUpdateInterval', () => {
     ).toEqual(1000);
   });
 
-  it('increase the call demand if database title and properties etc. needed to be synchronised as well', () => {
+  it('increase the call demand if database title and properties etc. needed to be synchronized as well', () => {
     expect(
       computePreviewUpdateInterval({
         databases: ['database1', 'database2'],
@@ -93,7 +93,7 @@ describe('fn:computeUpdateInterval', () => {
   });
 });
 
-describe('fn:normaliseConfig', () => {
+describe('fn:normalizeConfig', () => {
   const env = { ...process.env };
   afterEach(() => (process.env = { ...env }));
 
@@ -101,18 +101,18 @@ describe('fn:normaliseConfig', () => {
     process.env.GATSBY_NOTION_DATABASES = 'database_env_1, database_env_2';
     process.env.GATSBY_NOTION_PAGES = 'page_env_1, page_env_2';
 
-    const normalisedConfig = normaliseConfig({
+    const normalizedConfig = normalizeConfig({
       databases: ['database_options'],
       pages: ['page_options'],
     });
 
-    expect(normalisedConfig.databases).toEqual([
+    expect(normalizedConfig.databases).toEqual([
       'database_options',
       'database_env_1',
       'database_env_2',
     ]);
 
-    expect(normalisedConfig.pages).toEqual([
+    expect(normalizedConfig.pages).toEqual([
       'page_options',
       'page_env_1',
       'page_env_2',
@@ -122,7 +122,7 @@ describe('fn:normaliseConfig', () => {
 
 describe('fn:getDatabases', () => {
   it('return nothing if no database is supplied', async () => {
-    expect(await getDatabases(client, normaliseConfig({}))).toEqual([]);
+    expect(await getDatabases(client, normalizeConfig({}))).toEqual([]);
   });
 
   it('return databases from Notion API', async () => {
@@ -130,7 +130,7 @@ describe('fn:getDatabases', () => {
 
     const databases = await getDatabases(
       client,
-      normaliseConfig({
+      normalizeConfig({
         databases: ['database'],
       }),
     );
@@ -141,7 +141,7 @@ describe('fn:getDatabases', () => {
 
 describe('fn:getPages', () => {
   it('return nothing if no page is supplied', async () => {
-    expect(await getPages(client, normaliseConfig({}))).toEqual([]);
+    expect(await getPages(client, normalizeConfig({}))).toEqual([]);
   });
 
   it('return pages from Notion API', async () => {
@@ -149,7 +149,7 @@ describe('fn:getPages', () => {
 
     const pages = await getPages(
       client,
-      normaliseConfig({
+      normalizeConfig({
         pages: ['page'],
       }),
     );
@@ -165,7 +165,7 @@ describe('fn:sync', () => {
   it('source all nodes', async () => {
     await sync(
       {} as any,
-      normaliseConfig({
+      normalizeConfig({
         token: 'token',
         databases: ['database'],
         pages: ['page'],

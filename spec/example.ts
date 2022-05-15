@@ -127,9 +127,9 @@ export const richtext: RichText[] = [
       underline: false,
     },
     href: null,
-    plain_text: 'colour',
+    plain_text: 'color',
     text: {
-      content: 'colour',
+      content: 'color',
       link: null,
     },
     type: 'text',
@@ -1201,7 +1201,7 @@ export const full: FullBlock[] = [
         },
         {
           type: 'text',
-          text: { content: 'colour', link: null },
+          text: { content: 'color', link: null },
           annotations: {
             bold: false,
             italic: false,
@@ -1210,7 +1210,7 @@ export const full: FullBlock[] = [
             code: false,
             color: 'yellow_background',
           },
-          plain_text: 'colour',
+          plain_text: 'color',
           href: null,
         },
       ],
