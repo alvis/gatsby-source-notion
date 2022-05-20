@@ -13,33 +13,31 @@
  * -------------------------------------------------------------------------
  */
 
+import { Client } from '@notionhq/client';
 import { caching } from 'cache-manager';
-import got from 'got';
 import { dump } from 'js-yaml';
 
 import { markdown } from '#markdown';
-import { getPropertyContent } from '#property';
-
-import type { Cache } from 'cache-manager';
-import type { Got, OptionsOfJSONResponseBody, Response } from 'got';
+import { getMetadata } from '#metadata';
+import {
+  getPropertyContentFromRichText,
+  isPageAccessible,
+  isPropertyAccessible,
+  isPropertySupported,
+  normalizeProperties,
+} from '#property';
 
 import type {
   Block,
   Database,
-  Entity,
-  FullBlock,
-  FullDatabase,
-  FullPage,
-  List,
+  NotionAPIDatabase,
+  NotionAPIList,
+  NotionAPIPage,
+  NotionAPITitle,
   Page,
 } from './types';
 
-interface Pagination extends Record<string, number | string | undefined> {
-  /* eslint-disable @typescript-eslint/naming-convention */
-  start_cursor?: string;
-  page_size?: number;
-  /* eslint-enable */
-}
+import type { Cache } from 'cache-manager';
 
 export interface NotionTTL {
   /** the number of seconds in which a database metadata will be cached */
@@ -55,8 +53,6 @@ export interface NotionTTL {
 export interface NotionOptions {
   /** access token, default to be the environment variable GATSBY_NOTION_TOKEN */
   token?: string;
-  /** api version, default to be 2021-05-13 */
-  version?: string;
   /** cache setting for the client, default to the shared memory store */
   /** a cache manager for saving unnecessary calls, default to the shared memory store */
   cache?: Cache;
@@ -67,8 +63,8 @@ export interface NotionOptions {
 export const DEFAULT_CACHE: Cache = caching({ store: 'memory', ttl: 0 });
 export const DEFAULT_TTL: NotionTTL = {
   databaseMeta: 0,
-  databaseEntries: 0.5,
-  pageMeta: 0.5,
+  databaseEntries: 5,
+  pageMeta: 5,
   pageContent: 0,
 };
 
@@ -78,7 +74,7 @@ const ONE_MINUTE = 60000;
 export class Notion {
   private cache: Cache;
   private ttl: NotionTTL;
-  private client: Got;
+  private client: Client;
 
   /**
    * create a Notion client with plugin options
@@ -86,11 +82,9 @@ export class Notion {
    * @returns a Notion client
    */
   constructor(options?: NotionOptions) {
-    const {
-      token = process.env.GATSBY_NOTION_TOKEN,
-      version = '2021-05-13',
-      cache = DEFAULT_CACHE,
-    } = { ...options };
+    const { token = process.env.GATSBY_NOTION_TOKEN, cache = DEFAULT_CACHE } = {
+      ...options,
+    };
 
     // setup the cache
     this.cache = cache;
@@ -103,15 +97,9 @@ export class Notion {
       throw new Error('missing API token');
     }
 
-    this.client = got.extend({
-      prefixUrl: 'https://api.notion.com/v1',
-      headers: {
-        /* eslint-disable @typescript-eslint/naming-convention */
-        'authorization': `Bearer ${token}`,
-        'notion-version': version,
-        /* eslint-enable @typescript-eslint/naming-convention */
-      },
-      responseType: 'json',
+    this.client = new Client({
+      auth: token,
+      notionVersion: '2022-02-22', // fix the version to ensure compatability
     });
   }
 
@@ -120,35 +108,42 @@ export class Notion {
    * @param id the uuid of the database
    * @returns database metadata
    */
-  public async getDatabase(id: string): Promise<FullDatabase> {
+  public async getDatabase(id: string): Promise<Database | null> {
     // get the database metadata from cache, if available
-    const { body } = await this.cache.wrap<Response<Database>>(
+    const database = (await this.cache.wrap(
       `database:${id}`,
-      async () => this.client.get<Database>(`databases/${id}`),
+      /* eslint-disable @typescript-eslint/naming-convention */
+      async () => this.client.databases.retrieve({ database_id: id }),
+      /* eslint-enable */
       // NOTE: by default the cache would last forever and
       //       therefore no API call will be make after the first attempt
       { ttl: this.ttl.databaseMeta },
-    );
+    )) as NotionAPIDatabase; // NOTE: force casting here because unlike the older API version the version using here always return metadata like url etc.
+
     // get a list of pages in the database from cache, if available
-    const pages = await this.cache.wrap<Page[]>(
+    const pages = await this.cache.wrap(
       `database:${id}:pages`,
-      async () =>
-        this.getCompleteList<Page>({
-          method: 'post',
-          url: `databases/${id}/query`,
-        }),
-      // NOTE: by default the cache has only got a 0.5s TTL and
+      /* eslint-disable @typescript-eslint/naming-convention */
+      async () => getAll(this.client.databases.query, { database_id: id }),
+      /* eslint-enable @typescript-eslint/naming-convention */
+      // NOTE: by default the cache has only got a 5s TTL and
       //       therefore we will almost always make an API call and
       //       get the most up-to-date last_edited_time of each page
+      //       during build but skip any unnecessary API calls in the same build
       { ttl: this.ttl.databaseEntries },
     );
 
+    const normalizedPages = await Promise.all(
+      pages.filter(isPageAccessible).map(this.normalizePageAndCache.bind(this)),
+    );
+
     return {
-      ...body,
-      title: body.title.map((text) => text.plain_text).join(''),
-      pages: await Promise.all(
-        pages.map(this.normalizePageAndCache.bind(this)),
-      ),
+      id: database.id,
+      object: 'database',
+      parent: database.parent,
+      title: getPropertyContentFromRichText(database.title),
+      metadata: getMetadata(database),
+      pages: normalizedPages,
     };
   }
 
@@ -157,17 +152,20 @@ export class Notion {
    * @param id the uuid of the page
    * @returns metadata and its content
    */
-  public async getPage(id: string): Promise<FullPage> {
-    const { body } = await this.cache.wrap<Response<Page>>(
+  public async getPage(id: string): Promise<Page | null> {
+    const page = (await this.cache.wrap(
       `page:${id}`,
-      async () => this.client.get<Page>(`pages/${id}`),
-      // NOTE: by default the cache has only got a 0.5s TTL and
+      /* eslint-disable @typescript-eslint/naming-convention */
+      async () => this.client.pages.retrieve({ page_id: id }),
+      /* eslint-enable */
+      // NOTE: by default the cache has only got a 5s TTL and
       //       therefore we will almost always make an API call and
       //       get the most up-to-date last_edited_time of the page
+      //       during build but skip any unnecessary API calls in the same build
       { ttl: this.ttl.pageMeta },
-    );
+    )) as NotionAPIPage; // NOTE: force casting here because unlike the older API version the version using here always return metadata like url etc.
 
-    return this.normalizePageAndCache(body);
+    return this.normalizePageAndCache(page);
   }
 
   /**
@@ -175,15 +173,21 @@ export class Notion {
    * @param id the uuid of the collection, either a database or page or a parent block
    * @returns a list of blocks and all its children
    */
-  private async getBlocks(id: string): Promise<FullBlock[]> {
-    const blocks = await this.getCompleteList<Block>({
-      method: 'get',
-      url: `blocks/${id}/children`,
+  private async getBlocks(id: string): Promise<Block[]> {
+    /* eslint-disable @typescript-eslint/naming-convention */
+    const blocks = await getAll(this.client.blocks.children.list, {
+      block_id: id,
     });
+    /* eslint-enable */
+
+    // remove any blocks that cannot be read due to access restriction
+    const filteredBlocks = blocks
+      .filter(isPropertyAccessible)
+      .filter(isPropertySupported);
 
     return Promise.all(
-      blocks.map(
-        async (block): Promise<FullBlock> => ({
+      filteredBlocks.map(
+        async (block): Promise<Block> => ({
           ...block,
           /* eslint-disable @typescript-eslint/naming-convention */
           ...(block.has_children
@@ -196,81 +200,36 @@ export class Notion {
   }
 
   /**
-   * get all records from a method that need to be called multiple times to get all the paginated records
-   * @param options options for Got without the page_size and start_cursor payload
-   * @returns all records returned
-   */
-  private async getCompleteList<E extends Entity = Entity>(
-    options: OptionsOfJSONResponseBody,
-  ): Promise<E[]> {
-    let next: string | undefined = undefined;
-    let hasMore = true;
-    const entities: E[] = [];
-
-    while (hasMore) {
-      /* eslint-disable @typescript-eslint/naming-convention */
-      const searchParams: Pagination = { page_size: 100, start_cursor: next };
-
-      const {
-        body: { has_more, next_cursor, results },
-      }: Response<List<E>> = await this.client<List<E>>({
-        ...options,
-        ...(options.method === 'get'
-          ? {
-              searchParams,
-            }
-          : {
-              json: {
-                ...options.json,
-                ...searchParams,
-              },
-            }),
-      });
-      /* eslint-enable */
-
-      hasMore = has_more;
-      next = next_cursor ?? undefined;
-      entities.push(...results);
-    }
-
-    return entities;
-  }
-
-  /**
    * complete the missing fields in Page
    * @param page the page object returned from Notion API
    * @returns page with title and its content
    */
-  private async normalizePage(page: Page): Promise<FullPage> {
+  private async normalizePage(page: NotionAPIPage): Promise<Page> {
     // NOTE: API calls will be made for getting blocks as no cache will be set
     const blocks = await this.getBlocks(page.id);
-    // Name for a page in a database, title for an ordinary page
-    const title = getPropertyContent(
-      /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
-      page.properties.Name ?? page.properties.title,
-    ) as string;
-    const frontmatter = [
-      '---',
-      dump(
-        {
-          id: page.id,
-          title,
-          createdTime: page.created_time,
-          lastEditedTime: page.last_edited_time,
-          ...Object.fromEntries(
-            Object.entries(page.properties)
-              // omit the already transformed title
-              .filter(([key]) => !['title', 'Name'].includes(key))
-              .map(([key, property]) => [key, getPropertyContent(property)]),
-          ),
-        },
-        { forceQuotes: true },
-      ).trim(),
-      '---',
-    ].join('\n');
-    const md = markdown(blocks);
+    const properties = normalizeProperties(page.properties);
+    const titleProperty = Object.values(page.properties).filter(
+      (property): property is NotionAPITitle => property.type === 'title',
+    )[0];
+    const title = getPropertyContentFromRichText(titleProperty.title);
 
-    return { ...page, blocks, title, markdown: [frontmatter, md].join('\n') };
+    const metadata = getMetadata(page);
+
+    return {
+      id: page.id,
+      object: 'page',
+      parent: page.parent,
+      title,
+      metadata,
+      properties,
+      blocks,
+      markdown: [
+        '---',
+        dump({ title, ...metadata }, { forceQuotes: true }).trim(),
+        '---',
+        markdown(blocks),
+      ].join('\n'),
+    };
   }
 
   /**
@@ -278,13 +237,13 @@ export class Notion {
    * @param page the page object returned from Notion API
    * @returns page with title and its content
    */
-  private async normalizePageAndCache(page: Page): Promise<FullPage> {
+  private async normalizePageAndCache(page: NotionAPIPage): Promise<Page> {
     const cacheKey = `page:${page.id}:content`;
-    const cachedPage = await this.cache.get<FullPage>(cacheKey);
+    const cachedPage = await this.cache.get<Page>(cacheKey);
 
     if (
       cachedPage &&
-      cachedPage.last_edited_time === page.last_edited_time &&
+      cachedPage.metadata.lastEditedTime === page.last_edited_time &&
       // don't use the cache if the last edited time happened to be the last minute since Notion rounded the time resolution to minute level recently
       Date.now() - new Date(page.last_edited_time).getTime() > ONE_MINUTE
     ) {
@@ -303,3 +262,43 @@ export class Notion {
     }
   }
 }
+
+/**
+ * get all records from a method that need to be called multiple times to get all the paginated records
+ * @param fn a Notion client function that returns paginated results
+ * @param arg arguments for the function
+ * @returns complete list of records
+ */
+async function getAll<
+  F extends Client['blocks']['children']['list'] | Client['databases']['query'],
+>(fn: F, arg: Parameters<F>[0]): Promise<Awaited<ReturnType<F>>['results']>;
+/* eslint-disable @typescript-eslint/naming-convention */
+async function getAll<A extends object>(
+  fn2: (
+    arg: { page_size: number; start_cursor: string | undefined } & A,
+  ) => Promise<NotionAPIList>,
+  arg: A,
+): Promise<NotionAPIList['results']> {
+  const state: { next: string | undefined; hasMore: boolean } = {
+    next: undefined,
+    hasMore: true,
+  };
+  const entities: NotionAPIList['results'] = [];
+
+  while (state.hasMore) {
+    const { has_more, next_cursor, results } = await fn2({
+      ...arg,
+      page_size: 100,
+      start_cursor: state.next,
+    });
+
+    // update the current state
+    Object.assign(state, { hasMore: has_more, next: next_cursor ?? undefined });
+
+    // push the results to the list
+    entities.push(...results);
+  }
+
+  return entities;
+}
+/* eslint-enable @typescript-eslint/naming-convention */

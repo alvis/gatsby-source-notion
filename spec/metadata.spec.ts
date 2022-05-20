@@ -5,7 +5,7 @@
  * See the LICENSE file for details.
  * -------------------------------------------------------------------------
  *
- * @summary   Collection of types related to Notion API
+ * @summary   Tests on the metadata extractor
  *
  * @author    Alvis HT Tang <alvis@hilbert.space>
  * @license   MIT
@@ -13,10 +13,16 @@
  * -------------------------------------------------------------------------
  */
 
-/* istanbul ignore file */
+import { getMetadata } from '#metadata';
 
-export * from './block';
-export * from './collection';
-export * from './format';
-export * from './user';
-export * from './property';
+import * as examples from './examples';
+
+describe('fn:getMetadata', () => {
+  it('return metadata from a page or database, except for the title', () => {
+    expect(getMetadata(examples.page)).toEqual({
+      createdTime: '2020-01-01T00:00:00Z',
+      lastEditedTime: '2020-01-01T00:00:00Z',
+      url: 'https://www.notion.so/workspace/page',
+    });
+  });
+});

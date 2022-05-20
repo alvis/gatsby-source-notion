@@ -13,328 +13,343 @@
  * -------------------------------------------------------------------------
  */
 
-import { getPropertyContent } from '#property';
+import {
+  getPropertyContent,
+  getPropertyContentFromFile,
+  getPropertyContentFromFormula,
+  getPropertyContentFromRichText,
+  getPropertyContentFromRollup,
+  getPropertyContentFromUser,
+  isPropertyAccessible,
+  isPropertySupported,
+  isPageAccessible,
+  normalizeProperties,
+} from '#property';
 
-describe('fn:getPropertyContent', () => {
-  it('return the content of a title property', () => {
-    expect(
-      getPropertyContent({
-        type: 'title',
-        title: [
-          {
-            type: 'text',
-            text: {
-              content: 'Title',
-              link: null,
-            },
-            annotations: {
-              bold: true,
-              italic: true,
-              strikethrough: true,
-              underline: true,
-              code: true,
-              color: 'default',
-            },
-            plain_text: 'Title',
-            href: null,
-          },
-        ],
-      }),
-    ).toEqual('Title');
-  });
+import * as examples from './examples';
 
-  it('return the content of a rich text property', () => {
+describe('fn:getPropertyContentFromFile', () => {
+  it('return an external file URL', () => {
     expect(
-      getPropertyContent({
-        type: 'rich_text',
-        rich_text: [
-          {
-            type: 'text',
-            text: {
-              content: 'Text',
-              link: null,
-            },
-            annotations: {
-              bold: true,
-              italic: true,
-              strikethrough: true,
-              underline: true,
-              code: true,
-              color: 'default',
-            },
-            plain_text: 'Text',
-            href: null,
-          },
-        ],
-      }),
-    ).toEqual('Text');
-  });
-
-  it('return the content of a number property', () => {
-    expect(
-      getPropertyContent({
-        type: 'number',
-        number: 0,
-      }),
-    ).toEqual(0);
-  });
-
-  it('return the content of a selection property', () => {
-    expect(
-      getPropertyContent({
-        type: 'select',
-        select: {
-          color: 'default',
-          id: 'id',
-          name: 'Selection',
+      getPropertyContentFromFile({
+        type: 'external',
+        external: {
+          url: 'url',
         },
-      }),
-    ).toEqual('Selection');
-  });
-
-  it('return the content of a multiple selection property', () => {
-    expect(
-      getPropertyContent({
-        type: 'multi_select',
-        multi_select: [
-          {
-            color: 'default',
-            id: 'id',
-            name: 'Selection',
-          },
-        ],
-      }),
-    ).toEqual(['Selection']);
-  });
-
-  it('return the content of a date property', () => {
-    expect(
-      getPropertyContent({
-        type: 'date',
-        date: { start: '2020-01-01T00:00:00Z' },
-      }),
-    ).toEqual({ start: '2020-01-01T00:00:00Z' });
-  });
-
-  it('return the content of a people property', () => {
-    expect(
-      getPropertyContent({
-        type: 'people',
-        people: [
-          {
-            avatar_url: 'url',
-            id: 'id',
-            name: 'Name',
-            object: 'user',
-            type: 'person',
-          },
-        ],
-      }),
-    ).toEqual([{ name: 'Name', avatar: 'url' }]);
-  });
-
-  it('return the content of a files property', () => {
-    expect(
-      getPropertyContent({
-        type: 'files',
-        files: [
-          {
-            name: 'file name',
-          },
-        ],
-      }),
-    ).toEqual(['file name']);
-  });
-
-  it('return the content of a checkbox property', () => {
-    expect(
-      getPropertyContent({
-        type: 'checkbox',
-        checkbox: true,
-      }),
-    ).toEqual(true);
-  });
-
-  it('return the content of a url property', () => {
-    expect(
-      getPropertyContent({
-        type: 'url',
-        url: 'url',
       }),
     ).toEqual('url');
   });
 
-  it('return the content of a email property', () => {
+  it('return an embedded file URL', () => {
     expect(
-      getPropertyContent({
-        type: 'email',
-        email: 'email',
-      }),
-    ).toEqual('email');
-  });
-
-  it('return the content of a string formula property', () => {
-    expect(
-      getPropertyContent({
-        type: 'formula',
-        formula: {
-          string: 'text',
-          type: 'string',
+      getPropertyContentFromFile({
+        type: 'file',
+        file: {
+          url: 'url',
         },
       }),
-    ).toEqual('text');
+    ).toEqual('url');
   });
 
-  it('return the content of a number formula property', () => {
-    expect(
-      getPropertyContent({
-        type: 'formula',
-        formula: {
-          number: 0,
-          type: 'number',
+  it('throw an error for unknown file type', () => {
+    expect(() =>
+      getPropertyContentFromFile({
+        file: {
+          url: 'url',
         },
       }),
-    ).toEqual(0);
+    ).toThrow();
+  });
+});
+
+describe('fn:getPropertyContentFromFormula', () => {
+  it('return a string value', () => {
+    expect(
+      getPropertyContentFromFormula({ type: 'string', string: 'content' }),
+    ).toEqual('content');
   });
 
-  it('return the content of a boolean formula property', () => {
+  it('return a number value', () => {
     expect(
-      getPropertyContent({
-        type: 'formula',
-        formula: {
-          boolean: true,
-          type: 'boolean',
-        },
-      }),
+      getPropertyContentFromFormula({ type: 'number', number: 1 }),
+    ).toEqual(1);
+  });
+
+  it('return a boolean value', () => {
+    expect(
+      getPropertyContentFromFormula({ type: 'boolean', boolean: true }),
     ).toEqual(true);
   });
 
-  it('return the content of a date formula property', () => {
+  it('return a date value', () => {
     expect(
-      getPropertyContent({
-        type: 'formula',
-        formula: {
-          date: { start: '2020-01-01T00:00:00Z' },
-          type: 'date',
+      getPropertyContentFromFormula({
+        type: 'date',
+        date: {
+          start: '2020-01-01',
+          end: '2020-12-32',
+          time_zone: 'Europe/London',
         },
       }),
-    ).toEqual({ start: '2020-01-01T00:00:00Z' });
+    ).toEqual({
+      start: '2020-01-01',
+      end: '2020-12-32',
+      time_zone: 'Europe/London',
+    });
+  });
+
+  it('throw an error for unknown formula type', () => {
+    expect(() =>
+      getPropertyContentFromFormula({
+        // @ts-expect-error
+        type: 'unknown',
+      }),
+    ).toThrow();
+  });
+});
+
+describe('fn:getPropertyContentFromRichText', () => {
+  it('return plain text', () => {
+    expect(
+      getPropertyContentFromRichText(examples.richTextProperty['rich_text']),
+    ).toEqual(examples.richTextContent);
+  });
+});
+
+describe('fn:getPropertyContentFromRollup', () => {
+  it('return a number value', () => {
+    expect(
+      getPropertyContentFromRollup(examples.rollupNumberProperty['rollup']),
+    ).toEqual(examples.rollupNumberContent);
+  });
+
+  it('return a date value', () => {
+    expect(
+      getPropertyContentFromRollup(examples.rollupDateProperty['rollup']),
+    ).toEqual(examples.rollupDateContent);
+  });
+
+  it('return an array value', () => {
+    expect(
+      getPropertyContentFromRollup(examples.rollupArrayProperty['rollup']),
+    ).toEqual(examples.rollupArrayContent);
+  });
+});
+
+describe('fn:getPropertyContentFromUser', () => {
+  it('return metadata about a user', () => {
+    expect(getPropertyContentFromUser(examples.personUser)).toEqual(
+      examples.personUserContent,
+    );
+  });
+
+  it('return metadata about a user without email', () => {
+    expect(getPropertyContentFromUser(examples.personUserWithoutEmail)).toEqual(
+      examples.personUserWithoutEmailContent,
+    );
+  });
+
+  it('return metadata about a user behind a bot', () => {
+    expect(getPropertyContentFromUser(examples.botByUser)).toEqual(
+      examples.personUserContent,
+    );
+  });
+
+  it('return null for a workspace bot', () => {
+    expect(getPropertyContentFromUser(examples.botWithoutUser)).toEqual(null);
+  });
+
+  it('return null for an inaccessible user object', () => {
+    expect(getPropertyContentFromUser(null)).toEqual(null);
+  });
+});
+
+describe('fn:getPropertyContent', () => {
+  it('return the content of a title property', () => {
+    expect(getPropertyContent(examples.titleProperty)).toEqual(
+      examples.titleContent,
+    );
+  });
+
+  it('return the content of a rich text property', () => {
+    expect(getPropertyContent(examples.richTextProperty)).toEqual(
+      examples.richTextContent,
+    );
+  });
+
+  it('return the content of a number property', () => {
+    expect(getPropertyContent(examples.numberProperty)).toEqual(
+      examples.numberContent,
+    );
+  });
+
+  it('return the content of a selection property', () => {
+    expect(getPropertyContent(examples.selectionProperty)).toEqual(
+      examples.selectionContent,
+    );
+
+    expect(
+      getPropertyContent({
+        type: 'select',
+        select: null,
+      }),
+    ).toEqual(null);
+  });
+
+  it('return the content of a multiple selection property', () => {
+    expect(getPropertyContent(examples.multipleSelectionProperty)).toEqual(
+      examples.multipleSelectionContent,
+    );
+  });
+
+  it('return the content of a date property', () => {
+    expect(getPropertyContent(examples.dateProperty)).toEqual(
+      examples.dateContent,
+    );
+  });
+
+  it('return the content of a people property', () => {
+    expect(getPropertyContent(examples.peopleProperty)).toEqual(
+      examples.peopleContent,
+    );
+  });
+
+  it('return the content of a files property', () => {
+    expect(getPropertyContent(examples.filesProperty)).toEqual(
+      examples.filesContent,
+    );
+  });
+
+  it('return the content of a checkbox property', () => {
+    expect(getPropertyContent(examples.checkboxProperty)).toEqual(
+      examples.checkboxContent,
+    );
+  });
+
+  it('return the content of a url property', () => {
+    expect(getPropertyContent(examples.urlProperty)).toEqual(
+      examples.urlContent,
+    );
+  });
+
+  it('return the content of a email property', () => {
+    expect(getPropertyContent(examples.emailProperty)).toEqual(
+      examples.emailContent,
+    );
+  });
+
+  it('return the content of a string formula property', () => {
+    expect(getPropertyContent(examples.formulaStringProperty)).toEqual(
+      examples.formulaStringContent,
+    );
+  });
+
+  it('return the content of a number formula property', () => {
+    expect(getPropertyContent(examples.formulaNumberProperty)).toEqual(
+      examples.formulaNumberContent,
+    );
+  });
+
+  it('return the content of a boolean formula property', () => {
+    expect(getPropertyContent(examples.formulaBooleanProperty)).toEqual(
+      examples.formulaBooleanContent,
+    );
+  });
+
+  it('return the content of a date formula property', () => {
+    expect(getPropertyContent(examples.formulaDateProperty)).toEqual(
+      examples.formulaDateContent,
+    );
   });
 
   it('return the content of a phone number property', () => {
-    expect(
-      getPropertyContent({
-        type: 'phone_number',
-        phone_number: 'number',
-      }),
-    ).toEqual('number');
+    expect(getPropertyContent(examples.phoneNumberProperty)).toEqual(
+      examples.phoneNumberContent,
+    );
   });
 
   it('return the content of a number rollup property', () => {
-    expect(
-      getPropertyContent({
-        type: 'rollup',
-        rollup: {
-          number: 0,
-          type: 'number',
-        },
-      }),
-    ).toEqual(0);
+    expect(getPropertyContent(examples.rollupNumberProperty)).toEqual(
+      examples.rollupNumberContent,
+    );
   });
 
   it('return the content of a date rollup property', () => {
-    expect(
-      getPropertyContent({
-        type: 'rollup',
-        rollup: {
-          date: { start: '2020-01-01T00:00:00Z' },
-          type: 'date',
-        },
-      }),
-    ).toEqual({ start: '2020-01-01T00:00:00Z' });
+    expect(getPropertyContent(examples.rollupDateProperty)).toEqual(
+      examples.rollupDateContent,
+    );
   });
 
   it('return the content of an array rollup property', () => {
-    expect(
-      getPropertyContent({
-        type: 'rollup',
-        rollup: {
-          array: [
-            {
-              number: 0,
-              type: 'number',
-            },
-          ],
-          type: 'array',
-        },
-      }),
-    ).toEqual([0]);
-  });
-
-  it('return the content of a created by property', () => {
-    expect(
-      getPropertyContent({
-        type: 'created_by',
-        created_by: {
-          avatar_url: 'url',
-          id: 'id',
-          name: 'Name',
-          object: 'user',
-          person: {
-            email: 'email',
-          },
-          type: 'person',
-        },
-      }),
-    ).toEqual({ name: 'Name', avatar: 'url' });
+    expect(getPropertyContent(examples.rollupArrayProperty)).toEqual(
+      examples.rollupArrayContent,
+    );
   });
 
   it('return the content of a created time property', () => {
-    expect(
-      getPropertyContent({
-        type: 'created_time',
-        created_time: '2020-01-01T00:00:00Z',
-      }),
-    ).toEqual('2020-01-01T00:00:00Z');
-  });
-
-  it('return the content of a last edited by property', () => {
-    expect(
-      getPropertyContent({
-        type: 'last_edited_by',
-        last_edited_by: {
-          avatar_url: 'url',
-          id: 'id',
-          name: 'Name',
-          object: 'user',
-          person: {
-            email: 'email',
-          },
-          type: 'person',
-        },
-      }),
-    ).toEqual({ name: 'Name', avatar: 'url' });
+    expect(getPropertyContent(examples.createdTimeProperty)).toEqual(
+      examples.createdTimeContent,
+    );
   });
 
   it('return the content of a lasted edited time property', () => {
-    expect(
-      getPropertyContent({
-        type: 'last_edited_time',
-        last_edited_time: '2020-01-01T00:00:00Z',
-      }),
-    ).toEqual('2020-01-01T00:00:00Z');
+    expect(getPropertyContent(examples.lastEditedTimeProperty)).toEqual(
+      examples.lastEditedTimeContent,
+    );
   });
 
-  it('ignore properties which has no content', () => {
+  it('ignore unsupported properties', () => {
+    // @ts-expect-error Notion has unsupported property type in the past and also maybe in future
+    expect(getPropertyContent(examples.unsupportedProperty)).toEqual(null);
+  });
+});
+
+describe('fn:isPropertyAccessible', () => {
+  it('should return true for accessible properties', () => {
+    expect(isPropertyAccessible(examples.titleProperty)).toEqual(true);
+  });
+
+  it('should return false for non-accessible properties', () => {
+    expect(isPropertyAccessible({ id: 'property_id', object: 'user' })).toEqual(
+      false,
+    );
+  });
+});
+
+describe('fn:isPropertySupported', () => {
+  it('should return true for supported properties', () => {
+    expect(isPropertySupported(examples.titleProperty)).toEqual(true);
+  });
+
+  it('should return false for unsupported properties', () => {
     expect(
-      getPropertyContent({
-        type: 'relation',
-        relation: [
-          {
-            id: 'id',
-          },
-        ],
+      isPropertySupported({ type: 'unsupported', id: 'property_id' }),
+    ).toEqual(false);
+  });
+});
+
+describe('fn:isPageAccessible', () => {
+  // it('should return true for accessible pages', () => {
+  //   expect(isPageAccessible(examples.page)).toEqual(true);
+  // });
+
+  it('should return false for inaccessible databases', () => {
+    expect(isPageAccessible(examples.inaccessibleDatabase)).toEqual(false);
+  });
+
+  it('should return false for inaccessible pages', () => {
+    expect(isPageAccessible(examples.inaccessiblePage)).toEqual(false);
+  });
+});
+
+describe('fn:normalizeProperties', () => {
+  it('return a property object with its normalized value', () => {
+    expect(
+      normalizeProperties({
+        text: examples.richTextProperty,
       }),
-    ).toEqual(undefined);
+    ).toEqual({
+      text: examples.richTextContent,
+    });
   });
 });

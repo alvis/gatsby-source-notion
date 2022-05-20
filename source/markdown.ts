@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------------
  */
 
-import type { FullBlock, RichText } from '#types';
+import type { Block, NotionAPIRichText } from '#types';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 
@@ -22,7 +22,7 @@ import type { FullBlock, RichText } from '#types';
  * @param block a RichText block to be annotated
  * @returns an annotated RichText block
  */
-export function bold(block: RichText): RichText {
+export function bold(block: NotionAPIRichText): NotionAPIRichText {
   return block.annotations.bold
     ? {
         ...block,
@@ -37,7 +37,7 @@ export function bold(block: RichText): RichText {
  * @param block a RichText block to be annotated
  * @returns an annotated RichText block
  */
-export function italic(block: RichText): RichText {
+export function italic(block: NotionAPIRichText): NotionAPIRichText {
   return block.annotations.italic
     ? {
         ...block,
@@ -52,7 +52,7 @@ export function italic(block: RichText): RichText {
  * @param block a RichText block to be annotated
  * @returns an annotated RichText block
  */
-export function strikethrough(block: RichText): RichText {
+export function strikethrough(block: NotionAPIRichText): NotionAPIRichText {
   return block.annotations.strikethrough
     ? {
         ...block,
@@ -67,7 +67,7 @@ export function strikethrough(block: RichText): RichText {
  * @param block a RichText block to be annotated
  * @returns an annotated RichText block
  */
-export function code(block: RichText): RichText {
+export function code(block: NotionAPIRichText): NotionAPIRichText {
   return block.annotations.code
     ? {
         ...block,
@@ -82,7 +82,7 @@ export function code(block: RichText): RichText {
  * @param block a RichText block to be annotated
  * @returns an annotated RichText block
  */
-export function math(block: RichText): RichText {
+export function math(block: NotionAPIRichText): NotionAPIRichText {
   return block.type === 'equation'
     ? {
         ...block,
@@ -100,7 +100,7 @@ export function math(block: RichText): RichText {
  * @param block a RichText block to be parsed
  * @returns text in markdown format
  */
-export function text(block: RichText): string {
+export function text(block: NotionAPIRichText): string {
   const plain = strikethrough(italic(bold(code(math(block))))).plain_text;
 
   return block.href ? `[${plain}](${block.href})` : plain;
@@ -112,7 +112,7 @@ export function text(block: RichText): string {
  * @param indent space to be prefixed to the content per line
  * @returns text in markdown format
  */
-export function texts(blocks: RichText[], indent = ''): string {
+export function texts(blocks: NotionAPIRichText[], indent = ''): string {
   return `${indent}${blocks.map(text).join('')}`;
 }
 
@@ -123,11 +123,7 @@ export function texts(blocks: RichText[], indent = ''): string {
  * @param indent space to be prefixed to the content per line
  * @returns content with children content if present
  */
-function appendChildren(
-  parent: string,
-  block: FullBlock,
-  indent: string,
-): string {
+function appendChildren(parent: string, block: Block, indent: string): string {
   const supportedChildren = block.has_children
     ? block.children.filter((child) => child.type !== 'unsupported')
     : [];
@@ -159,30 +155,30 @@ function appendChildren(
  * @param indent space to be prefixed to the content per line
  * @returns text in markdown format
  */
-export function parse(block: FullBlock, indent = ''): string | null {
+export function parse(block: Block, indent = ''): string | null {
   const append = (text: string): string =>
     appendChildren(text, block, `${indent}  `);
 
   switch (block.type) {
     case 'heading_1':
-      return `# ${texts(block.heading_1.text)}\n`;
+      return `# ${texts(block.heading_1.rich_text)}\n`;
     case 'heading_2':
-      return `## ${texts(block.heading_2.text)}\n`;
+      return `## ${texts(block.heading_2.rich_text)}\n`;
     case 'heading_3':
-      return `### ${texts(block.heading_3.text)}\n`;
+      return `### ${texts(block.heading_3.rich_text)}\n`;
     case 'paragraph':
-      return `${append(texts(block.paragraph.text))}\n`;
+      return `${append(texts(block.paragraph.rich_text))}\n`;
     case 'bulleted_list_item':
-      return indent + append(`* ${texts(block.bulleted_list_item.text)}`);
+      return indent + append(`* ${texts(block.bulleted_list_item.rich_text)}`);
     case 'numbered_list_item':
-      return indent + append(`1. ${texts(block.numbered_list_item.text)}`);
+      return indent + append(`1. ${texts(block.numbered_list_item.rich_text)}`);
     case 'to_do': {
       const checked = block.to_do.checked ? 'x' : ' ';
 
-      return indent + append(`- [${checked}] ${texts(block.to_do.text)}`);
+      return indent + append(`- [${checked}] ${texts(block.to_do.rich_text)}`);
     }
     case 'toggle':
-      return `${append(texts(block.toggle.text))}\n`;
+      return `${append(texts(block.toggle.rich_text))}\n`;
     case 'child_page':
       return `${append(block.child_page.title)}\n`;
     case 'unsupported':
@@ -197,7 +193,7 @@ export function parse(block: FullBlock, indent = ''): string | null {
  * @param indent space to be prefixed to the content per line
  * @returns text in markdown format
  */
-export function markdown(blocks: FullBlock[], indent = ''): string {
+export function markdown(blocks: Block[], indent = ''): string {
   return blocks
     .map((block) => parse(block, indent))
     .filter((text): text is string => text !== null)

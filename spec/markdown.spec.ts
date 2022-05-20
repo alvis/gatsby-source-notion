@@ -37,14 +37,14 @@ import {
   toggle,
   unsupported,
   unsupportedIndented,
-} from './example';
+} from './examples';
 
-import type { Annotation, RichText } from '#types';
+import type { NotionAPIRichText } from '#types';
 
 function example(
-  annotation: Partial<Annotation> = {},
+  annotation: Partial<NotionAPIRichText['annotations']> = {},
   href: string | null = null,
-): RichText {
+): NotionAPIRichText {
   return {
     annotations: {
       bold: false,
@@ -68,7 +68,7 @@ function example(
 const unmarked = example();
 
 describe('fn:bold', () => {
-  const annotated: RichText = example({ bold: true });
+  const annotated: NotionAPIRichText = example({ bold: true });
 
   it('mark a text as bold', () => {
     const processed = bold(annotated);
@@ -89,7 +89,7 @@ describe('fn:bold', () => {
 });
 
 describe('fn:italic', () => {
-  const annotated: RichText = example({ italic: true });
+  const annotated: NotionAPIRichText = example({ italic: true });
 
   it('mark a text as italic', () => {
     const processed = italic(annotated);
@@ -110,7 +110,7 @@ describe('fn:italic', () => {
 });
 
 describe('fn:strikethrough', () => {
-  const annotated: RichText = example({ strikethrough: true });
+  const annotated: NotionAPIRichText = example({ strikethrough: true });
 
   it('mark a text as strike-through', () => {
     const processed = strikethrough(annotated);
@@ -131,7 +131,7 @@ describe('fn:strikethrough', () => {
 });
 
 describe('fn:code', () => {
-  const annotated: RichText = example({ code: true });
+  const annotated: NotionAPIRichText = example({ code: true });
 
   it('mark a text as inline code', () => {
     const processed = code(annotated);
@@ -152,7 +152,7 @@ describe('fn:code', () => {
 });
 
 describe('fn:text', () => {
-  const annotated: RichText = example(
+  const annotated: NotionAPIRichText = example(
     {
       bold: true,
       italic: true,
@@ -179,7 +179,7 @@ describe('fn:text', () => {
   });
 
   it('convert inline maths equation to markdown format', () => {
-    const math: RichText = {
+    const math: NotionAPIRichText = {
       type: 'equation',
       equation: { expression: 'x^2' },
       annotations: {

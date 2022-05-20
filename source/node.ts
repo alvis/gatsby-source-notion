@@ -15,14 +15,11 @@
 
 import { name } from '#.';
 
-import type { FullDatabase, FullPage } from '#types';
+import type { Database, Metadata, Page } from '#types';
 import type { NodeInput, NodePluginArgs } from 'gatsby';
 
-interface ContentNode<Type extends string> extends NodeInput {
+interface ContentNode<Type extends string> extends NodeInput, Metadata {
   ref: string;
-  createdTime: string;
-  lastEditedTime: string;
-  title: string;
   internal: {
     type: Type;
   } & NodeInput['internal'];
@@ -33,8 +30,8 @@ interface Link {
   id: string;
 }
 
-type FullEntity = FullDatabase | FullPage;
-type NormalizedEntity<E extends FullEntity = FullEntity> = E extends any
+type Entity = Database | Page;
+type NormalizedEntity<E extends Entity = Entity> = E extends any
   ? Omit<E, 'parent'> & {
       parent: Link | null;
       children: Link[];
@@ -82,7 +79,7 @@ export class NodeManager {
    * update nodes available on gatsby
    * @param entities all entities collected from notion, including database and page
    */
-  public async update(entities: FullEntity[]): Promise<void> {
+  public async update(entities: Entity[]): Promise<void> {
     // get entries with relationship build-in
     const old = new Map<string, NodeInput>(
       ((await this.cache.get('nodeGraph')) as
@@ -177,7 +174,7 @@ export class NodeManager {
         });
       } else {
         // recreate it again if somehow it's missing
-        this.createNode(node);
+        void this.createNode(node);
       }
     }
 
@@ -189,7 +186,7 @@ export class NodeManager {
    * @param entities all sort of entities including database and page
    * @returns a map of gatsby nodes with parent and children linked
    */
-  private computeNodeGraph(entities: FullEntity[]): Map<string, NodeInput> {
+  private computeNodeGraph(entities: Entity[]): Map<string, NodeInput> {
     // first compute the graph with entities before converting to nodes
     const entityMap = computeEntityMap(entities);
 
@@ -207,7 +204,7 @@ export class NodeManager {
    * @returns a database node
    */
   private createDatabaseNode(
-    database: NormalizedEntity<FullDatabase>,
+    database: NormalizedEntity<Database>,
   ): ContentNode<'NotionDatabase'> {
     return this.createBaseNode(database, { type: 'NotionDatabase' });
   }
@@ -218,7 +215,7 @@ export class NodeManager {
    * @returns a page node
    */
   private createPageNode(
-    page: NormalizedEntity<FullPage>,
+    page: NormalizedEntity<Page>,
   ): ContentNode<'NotionPage'> {
     return this.createBaseNode(page, {
       type: 'NotionPage',
@@ -240,10 +237,9 @@ export class NodeManager {
     const basis = {
       id: this.createNodeId(`${entity.object}:${entity.id}`),
       ref: entity.id,
-      createdTime: entity.created_time,
-      lastEditedTime: entity.last_edited_time,
-      properties: entity.properties,
       title: entity.title,
+      ...entity.metadata,
+      ...(entity.object === 'page' ? { properties: entity.properties } : {}),
       parent: entity.parent
         ? this.createNodeId(`${entity.parent.object}:${entity.parent.id}`)
         : null,
@@ -319,7 +315,7 @@ export function computeChanges(
  * @returns a map of entities with parent and children linked
  */
 export function computeEntityMap(
-  entities: FullEntity[],
+  entities: Entity[],
 ): Map<string, NormalizedEntity> {
   // create a new working set
   const map = new Map<string, NormalizedEntity>();
@@ -357,7 +353,7 @@ export function computeEntityMap(
  * @param parent the parent field returned from Notion API
  * @returns information about the parent in an unified format
  */
-export function normalizeParent(parent: FullEntity['parent']): Link | null {
+export function normalizeParent(parent: Entity['parent']): Link | null {
   switch (parent.type) {
     case 'database_id':
       return { object: 'database', id: parent.database_id };

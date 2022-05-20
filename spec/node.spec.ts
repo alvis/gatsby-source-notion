@@ -23,35 +23,35 @@ import {
   NodeManager,
 } from '#node';
 
-import type { FullDatabase, FullPage } from '#types';
+import type { Database, Page } from '#types';
 import { NodeInput } from 'gatsby';
 
 function generateDatabase({
   databaseID = 'database',
   title = 'Database Title',
-  parent = { type: 'workspace' },
+  parent = { type: 'workspace', workspace: true },
+  createdTime = '2020-01-01T00:00:00Z',
   lastEditedTime = '2020-01-01T00:00:00Z',
   pages = [],
 }: {
   databaseID?: string;
   title?: string;
-  parent?: FullDatabase['parent'];
+  parent?: Database['parent'];
+  createdBy?: { id: 'user'; object: 'user' };
+  createdTime?: string;
+  lastEditedBy?: { id: 'user'; object: 'user' };
   lastEditedTime?: string;
-  pages?: FullPage[];
-} = {}): FullDatabase {
+  pages?: Page[];
+} = {}): Database {
   return {
     object: 'database',
     id: databaseID,
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: lastEditedTime,
     parent,
     title,
-    properties: {
-      Name: {
-        id: 'title',
-        type: 'title',
-        title: {},
-      },
+    metadata: {
+      url: `https://www.notion.so/${title.replace(' ', '-')}-${databaseID}`,
+      createdTime,
+      lastEditedTime,
     },
     pages,
   };
@@ -60,24 +60,27 @@ function generateDatabase({
 function generatePage({
   pageID = 'page',
   title = 'Page Title',
-  parent = { type: 'workspace' },
+  parent = { type: 'workspace', workspace: true },
+  createdTime = '2020-01-01T00:00:00Z',
   lastEditedTime = '2020-01-01T00:00:00Z',
 }: {
   pageID?: string;
   title?: string;
-  parent?: FullPage['parent'];
+  parent?: Page['parent'];
+  createdTime?: string;
   lastEditedTime?: string;
-} = {}): FullPage {
+} = {}): Page {
   return {
     object: 'page',
     id: pageID,
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: lastEditedTime,
     parent,
-    archived: false,
-    url: `https://www.notion.so/${title.replace(' ', '-')}-${pageID}`,
     properties: {},
     title,
+    metadata: {
+      url: `https://www.notion.so/${title.replace(' ', '-')}-${pageID}`,
+      createdTime,
+      lastEditedTime,
+    },
     markdown: '',
     blocks: [],
   };
@@ -234,7 +237,9 @@ describe('fn:normalizeParent', () => {
   });
 
   it('transform a workspace parent', () => {
-    expect(normalizeParent({ type: 'workspace' })).toEqual(null);
+    expect(normalizeParent({ type: 'workspace', workspace: true })).toEqual(
+      null,
+    );
   });
 
   it('warn if an unsupported parented is given', () => {

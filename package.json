@@ -51,8 +51,8 @@
     "presetter-preset-strict": "^3.0.0"
   },
   "dependencies": {
+    "@notionhq/client": "^1.0.0",
     "cache-manager": "^3.4.0",
-    "got": "^11.8.0",
     "js-yaml": "^4.1.0"
   }
 }

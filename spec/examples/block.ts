@@ -13,9 +13,28 @@
  * -------------------------------------------------------------------------
  */
 
-import type { Block, FullBlock, RichText } from '#types';
+import type { Block, NotionAPIRichText } from '#types';
 
-export const richtext: RichText[] = [
+const commonMetadata: Pick<
+  Block,
+  | 'object'
+  | 'id'
+  | 'archived'
+  | 'created_by'
+  | 'created_time'
+  | 'last_edited_by'
+  | 'last_edited_time'
+> = {
+  object: 'block',
+  id: 'uuid',
+  archived: false,
+  created_by: { object: 'user', id: 'uuid' },
+  created_time: '2020-01-01T00:00:00Z',
+  last_edited_by: { object: 'user', id: 'uuid' },
+  last_edited_time: '2020-01-01T00:00:00Z',
+};
+
+export const richtext: NotionAPIRichText[] = [
   {
     annotations: {
       bold: true,
@@ -136,11 +155,8 @@ export const richtext: RichText[] = [
   },
 ];
 
-export const childPage: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const childPage: Block = {
+  ...commonMetadata,
   has_children: false,
   type: 'child_page',
   child_page: {
@@ -148,32 +164,28 @@ export const childPage: FullBlock = {
   },
 };
 
-export const unsupported: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const unsupported: Block = {
+  ...commonMetadata,
   has_children: false,
   type: 'unsupported',
   unsupported: {},
 };
 
-export const unsupportedIndented: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
-  has_children: true,
+export const unsupportedIndented: Block = {
+  ...commonMetadata,
   type: 'paragraph',
-  paragraph: { text: [] },
+  has_children: true,
+  paragraph: { color: 'default', rich_text: [] },
   children: [unsupported, unsupported, unsupported],
 };
 
-export const header1: FullBlock = {
-  created_time: '2020-01-01T00:00:00Z',
+export const header1: Block = {
+  ...commonMetadata,
+  type: 'heading_1',
   has_children: false,
   heading_1: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         annotations: {
           bold: false,
@@ -193,17 +205,15 @@ export const header1: FullBlock = {
       },
     ],
   },
-  id: 'uuid',
-  last_edited_time: '2020-01-01T00:00:00Z',
-  object: 'block',
-  type: 'heading_1',
 };
 
-export const header2: FullBlock = {
-  created_time: '2020-01-01T00:00:00Z',
+export const header2: Block = {
+  ...commonMetadata,
+  type: 'heading_2',
   has_children: false,
   heading_2: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         annotations: {
           bold: false,
@@ -223,17 +233,15 @@ export const header2: FullBlock = {
       },
     ],
   },
-  id: 'uuid',
-  last_edited_time: '2020-01-01T00:00:00Z',
-  object: 'block',
-  type: 'heading_2',
 };
 
-export const header3: FullBlock = {
-  created_time: '2020-01-01T00:00:00Z',
+export const header3: Block = {
+  ...commonMetadata,
+  type: 'heading_3',
   has_children: false,
   heading_3: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         annotations: {
           bold: false,
@@ -253,21 +261,15 @@ export const header3: FullBlock = {
       },
     ],
   },
-  id: 'uuid',
-  last_edited_time: '2020-01-01T00:00:00Z',
-  object: 'block',
-  type: 'heading_3',
 };
 
-export const paragraphSingleline: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const paragraphSingleline: Block = {
+  ...commonMetadata,
   has_children: false,
   type: 'paragraph',
   paragraph: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         type: 'text',
         text: { content: 'Paragraph', link: null },
@@ -286,18 +288,19 @@ export const paragraphSingleline: FullBlock = {
   },
 };
 
-export const paragraphMultiline: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const paragraphMultiline: Block = {
+  ...commonMetadata,
   has_children: false,
   type: 'paragraph',
   paragraph: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         type: 'text',
-        text: { content: 'Multiline Paragraph\nLine 1\nLine 2', link: null },
+        text: {
+          content: 'Multiline Paragraph\nLine 1\nLine 2',
+          link: null,
+        },
         annotations: {
           bold: false,
           italic: false,
@@ -313,15 +316,13 @@ export const paragraphMultiline: FullBlock = {
   },
 };
 
-export const paragraphIndented: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const paragraphIndented: Block = {
+  ...commonMetadata,
   has_children: true,
   type: 'paragraph',
   paragraph: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         type: 'text',
         text: { content: 'Intended Paragraph', link: null },
@@ -340,14 +341,12 @@ export const paragraphIndented: FullBlock = {
   },
   children: [
     {
-      object: 'block',
-      id: 'uuid',
-      created_time: '2020-01-01T00:00:00Z',
-      last_edited_time: '2020-01-01T00:00:00Z',
+      ...commonMetadata,
       has_children: true,
       type: 'paragraph',
       paragraph: {
-        text: [
+        color: 'default',
+        rich_text: [
           {
             type: 'text',
             text: {
@@ -369,14 +368,12 @@ export const paragraphIndented: FullBlock = {
       },
       children: [
         {
-          object: 'block',
-          id: 'uuid',
-          created_time: '2020-01-01T00:00:00Z',
-          last_edited_time: '2020-01-01T00:00:00Z',
+          ...commonMetadata,
           has_children: false,
           type: 'paragraph',
           paragraph: {
-            text: [
+            color: 'default',
+            rich_text: [
               {
                 type: 'text',
                 text: {
@@ -402,25 +399,23 @@ export const paragraphIndented: FullBlock = {
   ],
 };
 
-export const paragraphEmpty: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const paragraphEmpty: Block = {
+  ...commonMetadata,
   has_children: false,
   type: 'paragraph',
-  paragraph: { text: [] },
+  paragraph: {
+    color: 'default',
+    rich_text: [],
+  },
 };
 
-export const paragraphIndentedEmpty: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const paragraphIndentedEmpty: Block = {
+  ...commonMetadata,
   has_children: true,
   type: 'paragraph',
   paragraph: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         type: 'text',
         text: { content: '', link: null },
@@ -440,14 +435,12 @@ export const paragraphIndentedEmpty: FullBlock = {
   children: [
     unsupported,
     {
-      object: 'block',
-      id: 'uuid',
-      created_time: '2020-01-01T00:00:00Z',
-      last_edited_time: '2020-01-01T00:00:00Z',
+      ...commonMetadata,
       has_children: false,
       type: 'paragraph',
       paragraph: {
-        text: [
+        color: 'default',
+        rich_text: [
           {
             type: 'text',
             text: { content: '', link: null },
@@ -468,15 +461,13 @@ export const paragraphIndentedEmpty: FullBlock = {
   ],
 };
 
-export const toggle: FullBlock = {
-  object: 'block',
-  id: 'uuid',
-  created_time: '2020-01-01T00:00:00Z',
-  last_edited_time: '2020-01-01T00:00:00Z',
+export const toggle: Block = {
+  ...commonMetadata,
   has_children: true,
   type: 'toggle',
   toggle: {
-    text: [
+    color: 'default',
+    rich_text: [
       {
         type: 'text',
         text: { content: 'Toggle', link: null },
@@ -495,14 +486,12 @@ export const toggle: FullBlock = {
   },
   children: [
     {
-      object: 'block',
-      id: 'uuid',
-      created_time: '2020-01-01T00:00:00Z',
-      last_edited_time: '2020-01-01T00:00:00Z',
+      ...commonMetadata,
       has_children: false,
       type: 'paragraph',
       paragraph: {
-        text: [
+        color: 'default',
+        rich_text: [
           {
             type: 'text',
             text: {
@@ -526,19 +515,17 @@ export const toggle: FullBlock = {
   ],
 };
 
-export const full: FullBlock[] = [
+export const full: Block[] = [
   header1,
   header2,
   header3,
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'heading_1',
     heading_1: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'Paragraph', link: null },
@@ -557,14 +544,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'paragraph',
     paragraph: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'Paragraph 1', link: null },
@@ -583,14 +568,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'paragraph',
     paragraph: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'Paragraph 2', link: null },
@@ -611,14 +594,12 @@ export const full: FullBlock[] = [
   paragraphMultiline,
   paragraphIndented,
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'heading_1',
     heading_1: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'List', link: null },
@@ -637,14 +618,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: true,
     type: 'to_do',
     to_do: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'task1', link: null },
@@ -664,14 +643,12 @@ export const full: FullBlock[] = [
     },
     children: [
       {
-        object: 'block',
-        id: 'uuid',
-        created_time: '2020-01-01T00:00:00Z',
-        last_edited_time: '2020-01-01T00:00:00Z',
+        ...commonMetadata,
         has_children: true,
         type: 'to_do',
         to_do: {
-          text: [
+          color: 'default',
+          rich_text: [
             {
               type: 'text',
               text: {
@@ -694,14 +671,12 @@ export const full: FullBlock[] = [
         },
         children: [
           {
-            object: 'block',
-            id: 'uuid',
-            created_time: '2020-01-01T00:00:00Z',
-            last_edited_time: '2020-01-01T00:00:00Z',
+            ...commonMetadata,
             has_children: false,
             type: 'to_do',
             to_do: {
-              text: [
+              color: 'default',
+              rich_text: [
                 {
                   type: 'text',
                   text: {
@@ -728,14 +703,12 @@ export const full: FullBlock[] = [
     ],
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'to_do',
     to_do: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'task2', link: null },
@@ -755,14 +728,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: true,
     type: 'bulleted_list_item',
     bulleted_list_item: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'point 1', link: null },
@@ -781,14 +752,12 @@ export const full: FullBlock[] = [
     },
     children: [
       {
-        object: 'block',
-        id: 'uuid',
-        created_time: '2020-01-01T00:00:00Z',
-        last_edited_time: '2020-01-01T00:00:00Z',
+        ...commonMetadata,
         has_children: true,
         type: 'bulleted_list_item',
         bulleted_list_item: {
-          text: [
+          color: 'default',
+          rich_text: [
             {
               type: 'text',
               text: {
@@ -810,14 +779,12 @@ export const full: FullBlock[] = [
         },
         children: [
           {
-            object: 'block',
-            id: 'uuid',
-            created_time: '2020-01-01T00:00:00Z',
-            last_edited_time: '2020-01-01T00:00:00Z',
+            ...commonMetadata,
             has_children: false,
             type: 'bulleted_list_item',
             bulleted_list_item: {
-              text: [
+              color: 'default',
+              rich_text: [
                 {
                   type: 'text',
                   text: {
@@ -843,14 +810,12 @@ export const full: FullBlock[] = [
     ],
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'bulleted_list_item',
     bulleted_list_item: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'point 2', link: null },
@@ -869,14 +834,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: true,
     type: 'numbered_list_item',
     numbered_list_item: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'list 1', link: null },
@@ -895,14 +858,12 @@ export const full: FullBlock[] = [
     },
     children: [
       {
-        object: 'block',
-        id: 'uuid',
-        created_time: '2020-01-01T00:00:00Z',
-        last_edited_time: '2020-01-01T00:00:00Z',
+        ...commonMetadata,
         has_children: true,
         type: 'numbered_list_item',
         numbered_list_item: {
-          text: [
+          color: 'default',
+          rich_text: [
             {
               type: 'text',
               text: {
@@ -924,14 +885,12 @@ export const full: FullBlock[] = [
         },
         children: [
           {
-            object: 'block',
-            id: 'uuid',
-            created_time: '2020-01-01T00:00:00Z',
-            last_edited_time: '2020-01-01T00:00:00Z',
+            ...commonMetadata,
             has_children: false,
             type: 'numbered_list_item',
             numbered_list_item: {
-              text: [
+              color: 'default',
+              rich_text: [
                 {
                   type: 'text',
                   text: {
@@ -957,14 +916,12 @@ export const full: FullBlock[] = [
     ],
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'numbered_list_item',
     numbered_list_item: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'list 2', link: null },
@@ -983,14 +940,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'heading_1',
     heading_1: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'Special', link: null },
@@ -1011,14 +966,12 @@ export const full: FullBlock[] = [
   childPage,
   toggle,
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'paragraph',
     paragraph: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'mention',
           mention: {
@@ -1107,14 +1060,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'heading_1',
     heading_1: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'Annotated', link: null },
@@ -1217,14 +1168,12 @@ export const full: FullBlock[] = [
     },
   },
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: false,
     type: 'heading_1',
     heading_1: {
-      text: [
+      color: 'default',
+      rich_text: [
         {
           type: 'text',
           text: { content: 'Unsupported', link: null },
@@ -1248,24 +1197,19 @@ export const full: FullBlock[] = [
   unsupported,
   unsupportedIndented,
   {
-    object: 'block',
-    id: 'uuid',
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
+    ...commonMetadata,
     has_children: true,
     type: 'paragraph',
-    paragraph: { text: [] },
+    paragraph: { rich_text: [], color: 'default' },
     children: [
       unsupported,
       {
-        object: 'block',
-        id: 'uuid',
-        created_time: '2020-01-01T00:00:00Z',
-        last_edited_time: '2020-01-01T00:00:00Z',
+        ...commonMetadata,
         has_children: false,
         type: 'paragraph',
         paragraph: {
-          text: [],
+          color: 'default',
+          rich_text: [],
         },
       },
       unsupported,

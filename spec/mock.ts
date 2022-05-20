@@ -16,113 +16,102 @@
 import nock from 'nock';
 import { URL } from 'url';
 
-import type { Block, Database, List, Page, PropertyValueMap } from '#types';
+import * as examples from './examples';
 
-export function mockBlockList(
-  blockID: string,
-  count: number = 0,
-  hasChildren: boolean = true,
-) {
+import type { APIErrorCode } from '@notionhq/client';
+import type { Interceptor } from 'nock';
+
+import type { NotionAPIPropertyValue } from '#types';
+
+type MockedError =
+  | { type: 'code'; status: number; code: APIErrorCode }
+  | { type: 'network' };
+
+function mockError(arg: { instance: Interceptor; error: MockedError }): void {
+  const { error, instance } = arg;
+  if (error.type === 'code') {
+    instance.reply(error.status, {
+      object: 'error',
+      status: error.status,
+      code: error.code,
+      message: 'error message',
+    });
+  } else if (error.type === 'network') {
+    instance.replyWithError('Network error');
+  }
+}
+
+export function mockBlockList(arg: {
+  blockID: string;
+  blocks?: number;
+  hasChildren?: boolean;
+}) {
+  const { blockID, blocks: count = 0, hasChildren = true } = arg;
+
   if (hasChildren) {
     // mock the API for the children
     for (let i = 0; i < count; i++) {
-      mockBlockList(`${blockID}-block${i}`, 1, false);
+      mockBlockList({
+        blockID: `${blockID}-block${i}`,
+        blocks: 1,
+        hasChildren: false,
+      });
     }
   }
 
   nock('https://api.notion.com')
     .get(`/v1/blocks/${blockID}/children`)
     .query(true)
-    .times(count)
+    // .times(count)
     .reply((uri) => {
       const query = new URL(uri, 'https://api.notion.com').searchParams;
 
       const current = Number(query.get('start_cursor') ?? 0);
-      const text = `block ${current} for block ${blockID}`;
-
-      const body: List<Block> = {
-        object: 'list',
-        results: [
-          {
-            object: 'block',
-            id: `${blockID}-block${current}`,
-            created_time: '2020-01-01T00:00:00Z',
-            last_edited_time: '2020-01-01T00:00:00Z',
-            has_children: hasChildren,
-            type: 'paragraph',
-            paragraph: {
-              text: [
-                {
-                  type: 'text',
-                  text: {
-                    content: text,
-                    link: null,
-                  },
-                  annotations: {
-                    bold: false,
-                    italic: false,
-                    strikethrough: false,
-                    underline: false,
-                    code: false,
-                    color: 'default',
-                  },
-                  plain_text: text,
-                  href: null,
-                },
-              ],
-            },
-          },
-        ],
-        next_cursor: current + 1 < count ? `${current + 1}` : null,
-        has_more: current + 1 < count,
-      };
+      const body = examples.buildDummyBlockList({
+        // NOTE: one block per call
+        blockIDs: [`${blockID}-block${current}`],
+        hasChildren,
+        next: current + 1 < count ? `${current + 1}` : null,
+      });
 
       return [200, body];
-    });
+    })
+    .persist();
 }
 
-export function mockDatabase(
-  databaseID: string,
-  pages: number = 0,
-  blocks: number = 1,
+export function mockUser(
+  arg: Parameters<typeof examples.buildDummyUser>[0],
+  options?: {
+    error?: MockedError;
+    count?: number;
+  },
 ) {
-  mockDatabasePageList(databaseID, pages, blocks);
+  const { userID } = arg;
+  const { error, count = 0 } = { ...options };
 
-  const body: Database = {
-    object: 'database',
-    id: databaseID,
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
-    parent: {
-      type: 'workspace',
-    },
-    title: [
-      {
-        type: 'text',
-        text: {
-          content: 'Title',
-          link: null,
-        },
-        annotations: {
-          bold: false,
-          italic: false,
-          strikethrough: false,
-          underline: false,
-          code: false,
-          color: 'default',
-        },
-        plain_text: 'Title',
-        href: null,
-      },
-    ],
-    properties: {
-      Name: {
-        id: 'title',
-        type: 'title',
-        title: {},
-      },
-    },
-  };
+  const instance = nock('https://api.notion.com')
+    .get(`/v1/users/${userID}`)
+    .times(count);
+
+  if (error) {
+    mockError({ instance, error });
+  } else {
+    const body = examples.buildDummyUser(arg);
+    instance.reply(200, body);
+  }
+}
+
+export function mockDatabase(arg: {
+  databaseID: string;
+  pages?: number;
+  blocks?: number;
+}) {
+  const { databaseID, pages = 1, blocks = 1 } = arg;
+
+  mockUser({ userID: 'person_user' });
+  mockDatabasePageList({ databaseID, pages, blocks });
+
+  const body = examples.buildDummyDatabase({ databaseID });
 
   nock('https://api.notion.com')
     .get(`/v1/databases/${databaseID}`)
@@ -130,110 +119,47 @@ export function mockDatabase(
     .persist();
 }
 
-export function mockDatabasePageList(
-  databaseID: string,
-  pages: number = 0,
-  blocks = 1,
-) {
+export function mockDatabasePageList(arg: {
+  databaseID: string;
+  pages?: number;
+  blocks?: number;
+}): void {
+  const { databaseID, pages = 0, blocks = 1 } = arg;
+
   for (const pageID of [...Array(pages).keys()]) {
-    mockBlockList(`${databaseID}-page${pageID}`, blocks);
+    mockBlockList({ blockID: `${databaseID}-page${pageID}`, blocks });
   }
+
   nock('https://api.notion.com')
     .post(`/v1/databases/${databaseID}/query`)
-    .reply((_uri, _body) => {
-      const body: List<Page> = {
-        object: 'list',
-        results: [...Array(pages).keys()].map((pageID) => ({
-          object: 'page',
-          id: `${databaseID}-page${pageID}`,
-          created_time: '2020-01-01T00:00:00Z',
-          last_edited_time: '2020-01-01T00:00:00Z',
-          parent: {
-            type: 'database_id',
-            database_id: databaseID,
-          },
-          archived: false,
-          url: `https://www.notion.so/page-title-${databaseID}-page${pageID}`,
-          properties: {
-            Name: {
-              id: 'title',
-              title: [
-                {
-                  annotations: {
-                    bold: false,
-                    code: false,
-                    color: 'default',
-                    italic: false,
-                    strikethrough: false,
-                    underline: false,
-                  },
-                  href: null,
-                  plain_text: 'Title',
-                  text: {
-                    content: 'Title',
-                    link: null,
-                  },
-                  type: 'text',
-                },
-              ],
-              type: 'title',
-            },
-          },
-        })),
+    .reply((_uri, payload) => {
+      const current = Number(
+        (payload as { start_cursor?: string }).start_cursor ?? 0,
+      );
 
-        has_more: false,
-        next_cursor: null,
-      };
+      const body = examples.buildDummyDatabasePageList({
+        databaseID,
+        // NOTE: one page per call
+        pageIDs: [`${databaseID}-page${current}`],
+        next: current + 1 < pages ? `${databaseID}-page${current + 1}` : null,
+      });
 
       return [200, body];
     })
     .persist();
 }
 
-export function mockPage(
-  pageID: string,
-  blocks: number = 1,
-  properties: PropertyValueMap = {
-    title: {
-      id: 'title',
-      type: 'title',
-      title: [
-        {
-          annotations: {
-            bold: false,
-            code: false,
-            color: 'default',
-            italic: false,
-            strikethrough: false,
-            underline: false,
-          },
-          href: null,
-          plain_text: 'Title',
-          text: {
-            content: 'Title',
-            link: null,
-          },
-          type: 'text',
-        },
-      ],
-    },
-  },
-) {
-  mockBlockList(pageID, blocks);
+export function mockPage(arg: {
+  pageID: string;
+  blocks?: number;
+  properties?: Record<string, NotionAPIPropertyValue>;
+}): void {
+  const { pageID, blocks = 1, properties = {} } = arg;
 
-  const body: Page = {
-    object: 'page',
-    id: pageID,
-    created_time: '2020-01-01T00:00:00Z',
-    last_edited_time: '2020-01-01T00:00:00Z',
-    parent: {
-      type: 'database_id',
-      database_id: `database-${pageID}`,
-    },
-    archived: false,
-    url: `https://www.notion.so/${pageID}`,
-    properties,
-  };
+  mockUser({ userID: 'person_user' });
+  mockBlockList({ blockID: pageID, blocks: blocks });
+
+  const body = examples.buildDummyPage({ pageID, properties });
 
   nock('https://api.notion.com')
     .get(`/v1/pages/${pageID}`)

@@ -16,10 +16,9 @@
 import { DEFAULT_TTL, Notion } from '#client';
 import { NodeManager } from '#node';
 
-import type { NodePluginArgs, PluginOptions } from 'gatsby';
-
 import type { NotionOptions, NotionTTL } from '#client';
-import type { FullDatabase, FullPage } from '#types';
+import type { Database, Page } from '#types';
+import type { NodePluginArgs, PluginOptions } from 'gatsby';
 
 /** options for the source plugin */
 export interface PluginConfig extends PluginOptions, NotionOptions {
@@ -117,12 +116,17 @@ export function normalizeConfig(
 export async function getDatabases(
   client: Notion,
   pluginConfig: FullPluginConfig,
-): Promise<FullDatabase[]> {
-  const databases: FullDatabase[] = [];
+): Promise<Database[]> {
+  const databases: Database[] = [];
 
   for (const databaseID of pluginConfig.databases) {
+    // get database one by one to avoid too many API calls
     const database = await client.getDatabase(databaseID);
-    databases.push(database);
+
+    // add only when we have read permission
+    if (database) {
+      databases.push(database);
+    }
   }
 
   return databases;
@@ -137,11 +141,16 @@ export async function getDatabases(
 export async function getPages(
   client: Notion,
   pluginConfig: FullPluginConfig,
-): Promise<FullPage[]> {
-  const pages: FullPage[] = [];
+): Promise<Page[]> {
+  const pages: Page[] = [];
 
   for (const pageID of pluginConfig.pages) {
-    pages.push(await client.getPage(pageID));
+    const page = await client.getPage(pageID);
+
+    // add only when we have read permission
+    if (page) {
+      pages.push(page);
+    }
   }
 
   return pages;
