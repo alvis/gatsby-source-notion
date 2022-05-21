@@ -85,6 +85,9 @@ export type Metadata = {
   url: string;
   createdTime: string;
   lastEditedTime: string;
+  coverImage: string | null;
+  iconEmoji: string | null;
+  iconImage: string | null;
 };
 
 export type Page = {

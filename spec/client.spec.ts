@@ -15,8 +15,9 @@
 
 import assert from 'assert';
 
-import { Notion } from '#client';
+import { Notion, getCommonMetadata } from '#client';
 import { mockDatabase, mockPage } from './mock';
+import { NotionAPIPage } from '#types';
 
 describe('cl:Notion', () => {
   const client = new Notion({ token: 'token' });
@@ -71,6 +72,9 @@ title: 'Text'
 url: 'https://www.notion.so/workspace/page'
 lastEditedTime: '2020-01-01T00:00:00Z'
 createdTime: '2020-01-01T00:00:00Z'
+coverImage: 'https://www.notion.so/cover.png'
+iconEmoji: '📚'
+iconImage: null
 ---
 page-block0
 

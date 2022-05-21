@@ -13,6 +13,8 @@
  * -------------------------------------------------------------------------
  */
 
+import { getPropertyContentFromFile } from '#property';
+
 import type { Metadata, NotionAPIDatabase, NotionAPIPage } from '#types';
 
 /**
@@ -28,6 +30,33 @@ export function getMetadata<E extends NotionAPIPage | NotionAPIDatabase>(
 
   const variable = { url, lastEditedTime };
   const invariant = { createdTime };
+  const visual = getCommonVisualMetadata(entity);
 
-  return { ...variable, ...invariant };
+  return { ...variable, ...invariant, ...visual };
+}
+
+/**
+ * get common visual properties such as cover and icon from a page or database
+ * @param entity the page or database object returned from Notion API
+ * @returns common properties
+ */
+export function getCommonVisualMetadata<
+  E extends NotionAPIPage | NotionAPIDatabase,
+>(
+  entity: E,
+): {
+  coverImage: string | null;
+  iconEmoji: string | null;
+  iconImage: string | null;
+} {
+  const { cover, icon } = entity;
+
+  return {
+    coverImage: cover ? getPropertyContentFromFile(cover) : null,
+    iconEmoji: icon?.type === 'emoji' ? icon.emoji : null,
+    iconImage:
+      icon?.type === 'external' || icon?.type === 'file'
+        ? getPropertyContentFromFile(icon)
+        : null,
+  };
 }
