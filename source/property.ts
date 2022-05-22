@@ -53,7 +53,9 @@ export function getPropertyContent<
   formula: boolean | number | string | null;
   rollup: number | string | null;
   created_time: string;
+  created_by: Person | null;
   last_edited_time: string;
+  last_edited_by: Person | null;
   /* eslint-enable @typescript-eslint/naming-convention */
 }[T];
 export function getPropertyContent(
@@ -94,8 +96,12 @@ export function getPropertyContent(
       return getPropertyContentFromFormula(property.formula);
     case 'rollup':
       return getPropertyContentFromRollup(property.rollup);
+    case 'created_by':
+      return getPropertyContentFromUser(property.created_by);
     case 'created_time':
       return property.created_time;
+    case 'last_edited_by':
+      return getPropertyContentFromUser(property.last_edited_by);
     case 'last_edited_time':
       return property.last_edited_time;
     // @ts-expect-error Notion has unsupported property type in the past and also maybe in future

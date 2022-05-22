@@ -286,9 +286,21 @@ describe('fn:getPropertyContent', () => {
     );
   });
 
+  it('return the content of a created by property', () => {
+    expect(getPropertyContent(examples.createdByProperty)).toEqual(
+      examples.createdByContent,
+    );
+  });
+
   it('return the content of a created time property', () => {
     expect(getPropertyContent(examples.createdTimeProperty)).toEqual(
       examples.createdTimeContent,
+    );
+  });
+
+  it('return the content of a last edited by property', () => {
+    expect(getPropertyContent(examples.lastEditedByProperty)).toEqual(
+      examples.lastEditedByContent,
     );
   });
 

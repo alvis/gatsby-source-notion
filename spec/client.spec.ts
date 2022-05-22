@@ -15,9 +15,10 @@
 
 import assert from 'assert';
 
-import { Notion, getCommonMetadata } from '#client';
-import { mockDatabase, mockPage } from './mock';
-import { NotionAPIPage } from '#types';
+import { APIErrorCode } from '@notionhq/client';
+
+import { Notion } from '#client';
+import { mockDatabase, mockPage, mockUser } from './mock';
 
 describe('cl:Notion', () => {
   const client = new Notion({ token: 'token' });
@@ -70,7 +71,13 @@ describe('cl:Notion', () => {
 ---
 title: 'Text'
 url: 'https://www.notion.so/workspace/page'
+lastEditedByAvatar: 'url'
+lastEditedByEmail: 'email'
+lastEditedByName: 'Name'
 lastEditedTime: '2020-01-01T00:00:00Z'
+createdByAvatar: 'url'
+createdByEmail: 'email'
+createdByName: 'Name'
 createdTime: '2020-01-01T00:00:00Z'
 coverImage: 'https://www.notion.so/cover.png'
 iconEmoji: '📚'
@@ -95,6 +102,63 @@ page-block1-block0
       expect(page.id).toEqual('page');
       expect(page.title).toEqual('Text');
       expect(page.blocks.length).toEqual(BLOCKS_PER_PAGE);
+    });
+  });
+
+  describe('fn:getUser', () => {
+    it('return user information as detail as possible', async () => {
+      const userID = 'user_with_full_detail';
+      mockUser({ userID });
+
+      const user = await client.getUser(userID);
+
+      expect(user).toEqual({
+        object: 'user',
+        type: 'person',
+        id: userID,
+        name: 'Name',
+        avatar_url: 'url',
+        person: {
+          email: 'email',
+        },
+      });
+    });
+
+    it('return null for API token without user read capability', async () => {
+      const userID = 'inaccessible_user';
+      mockUser(
+        { userID },
+        {
+          error: {
+            type: 'code',
+            status: 403,
+            code: APIErrorCode.RestrictedResource,
+          },
+        },
+      );
+
+      const user = await client.getUser(userID);
+
+      expect(user).toEqual(null);
+    });
+
+    it('throw an error if there is any unexpected http error other than 403', async () => {
+      const userID = 'http_error';
+      mockUser(
+        { userID },
+        {
+          error: { type: 'code', status: 400, code: APIErrorCode.InvalidJSON },
+        },
+      );
+
+      await expect(async () => client.getUser(userID)).rejects.toThrowError();
+    });
+
+    it('throw any non http error', async () => {
+      const userID = 'network_error';
+      mockUser({ userID }, { error: { type: 'network' } });
+
+      await expect(async () => client.getUser(userID)).rejects.toThrowError();
     });
   });
 });

@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------------
  */
 
-import { Client } from '@notionhq/client';
+import { APIErrorCode, Client, isNotionClientError } from '@notionhq/client';
 import { caching } from 'cache-manager';
 import { dump } from 'js-yaml';
 
@@ -27,6 +27,8 @@ import {
   normalizeProperties,
 } from '#property';
 
+import type { Cache } from 'cache-manager';
+
 import type {
   Block,
   Database,
@@ -34,10 +36,9 @@ import type {
   NotionAPIList,
   NotionAPIPage,
   NotionAPITitle,
+  NotionAPIUser,
   Page,
 } from './types';
-
-import type { Cache } from 'cache-manager';
 
 export interface NotionTTL {
   /** the number of seconds in which a database metadata will be cached */
@@ -142,7 +143,13 @@ export class Notion {
       object: 'database',
       parent: database.parent,
       title: getPropertyContentFromRichText(database.title),
-      metadata: getMetadata(database),
+      metadata: getMetadata({
+        ...database,
+        /* eslint-disable @typescript-eslint/naming-convention */
+        created_by: await this.getUser(database.created_by.id),
+        last_edited_by: await this.getUser(database.last_edited_by.id),
+        /* eslint-enable @typescript-eslint/naming-convention */
+      }),
       pages: normalizedPages,
     };
   }
@@ -166,6 +173,32 @@ export class Notion {
     )) as NotionAPIPage; // NOTE: force casting here because unlike the older API version the version using here always return metadata like url etc.
 
     return this.normalizePageAndCache(page);
+  }
+
+  /**
+   * get user detail with cache
+   * @param id the uuid of a Notion user to be queried
+   * @returns user object returned from Notion's API
+   */
+  public async getUser(id: string): Promise<NotionAPIUser | null> {
+    try {
+      return await this.cache.wrap(
+        `user:${id}`,
+        /* eslint-disable @typescript-eslint/naming-convention */
+        async () => this.client.users.retrieve({ user_id: id }),
+        /* eslint-enable @typescript-eslint/naming-convention */
+      );
+    } catch (error) {
+      if (
+        isNotionClientError(error) &&
+        error.code === APIErrorCode.RestrictedResource
+      ) {
+        // NOTE: not throwing an error here because users may still want other data
+        return null;
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**
@@ -193,7 +226,7 @@ export class Notion {
           ...(block.has_children
             ? { has_children: true, children: await this.getBlocks(block.id) }
             : { has_children: false }),
-          /* eslint-enable */
+          /* eslint-enable @typescript-eslint/naming-convention */
         }),
       ),
     );
@@ -213,7 +246,13 @@ export class Notion {
     )[0];
     const title = getPropertyContentFromRichText(titleProperty.title);
 
-    const metadata = getMetadata(page);
+    const metadata = getMetadata({
+      ...page,
+      /* eslint-disable @typescript-eslint/naming-convention */
+      created_by: await this.getUser(page.created_by.id),
+      last_edited_by: await this.getUser(page.last_edited_by.id),
+      /* eslint-enable @typescript-eslint/naming-convention */
+    });
 
     return {
       id: page.id,

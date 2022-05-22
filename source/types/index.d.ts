@@ -83,7 +83,13 @@ export type Block = NotionAPIBlock &
 
 export type Metadata = {
   url: string;
+  createdByAvatar: string | null;
+  createdByEmail: string | null;
+  createdByName: string | null;
   createdTime: string;
+  lastEditedByAvatar: string | null;
+  lastEditedByEmail: string | null;
+  lastEditedByName: string | null;
   lastEditedTime: string;
   coverImage: string | null;
   iconEmoji: string | null;

@@ -24,8 +24,14 @@ describe('fn:getMetadata', () => {
       lastEditedTime: '2020-01-01T00:00:00Z',
       url: 'https://www.notion.so/workspace/page',
       coverImage: 'https://www.notion.so/cover.png',
+      createdByAvatar: 'url',
+      createdByEmail: 'email',
+      createdByName: 'Name',
       iconEmoji: '📚',
       iconImage: null,
+      lastEditedByAvatar: 'url',
+      lastEditedByEmail: 'email',
+      lastEditedByName: 'Name',
     });
   });
 
@@ -109,5 +115,89 @@ describe('fn:getMetadata', () => {
         },
       }),
     ).toEqual(expect.objectContaining({ iconEmoji: null, iconImage: 'url' }));
+  });
+
+  it('return null if the created by user is not accessible', () => {
+    expect(
+      getMetadata({
+        ...examples.page,
+        created_by: {
+          id: 'id',
+          object: 'user',
+        },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        createdByAvatar: null,
+        createdByEmail: null,
+        createdByName: null,
+      }),
+    );
+  });
+
+  it('return created by field content', () => {
+    expect(
+      getMetadata({
+        ...examples.page,
+        created_by: {
+          id: 'id',
+          type: 'person',
+          avatar_url: 'url',
+          name: 'name',
+          object: 'user',
+          person: {
+            email: 'email',
+          },
+        },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        createdByAvatar: 'url',
+        createdByEmail: 'email',
+        createdByName: 'name',
+      }),
+    );
+  });
+
+  it('return null if the created by user is not accessible', () => {
+    expect(
+      getMetadata({
+        ...examples.page,
+        last_edited_by: {
+          id: 'id',
+          object: 'user',
+        },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        lastEditedByAvatar: null,
+        lastEditedByEmail: null,
+        lastEditedByName: null,
+      }),
+    );
+  });
+
+  it('return last edited by field content', () => {
+    expect(
+      getMetadata({
+        ...examples.page,
+        last_edited_by: {
+          id: 'id',
+          type: 'person',
+          avatar_url: 'url',
+          name: 'name',
+          object: 'user',
+          person: {
+            email: 'email',
+          },
+        },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        lastEditedByAvatar: 'url',
+        lastEditedByEmail: 'email',
+        lastEditedByName: 'name',
+      }),
+    );
   });
 });
