@@ -4,10 +4,10 @@
   "description": "end to end test for the plugin",
   "private": true,
   "scripts": {
-    "build": "ts-node-cwd --transpile-only -- ../node_modules/.bin/gatsby build --verbose",
+    "build": "gatsby build --verbose",
     "prepare": "presetter bootstrap",
     "start": "start-server-and-test start:gatsby 8000 \"cypress open\"",
-    "start:gatsby": "cross-env CYPRESS_SUPPORT=y ts-node-cwd --transpile-only -- ../node_modules/.bin/gatsby develop --port 8000 --verbose",
+    "start:gatsby": "cross-env CYPRESS_SUPPORT=y gatsby develop --port 8000 --verbose",
     "test": "start-server-and-test start:gatsby 8000 \"cypress run\""
   },
   "devDependencies": {
