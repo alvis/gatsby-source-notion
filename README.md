@@ -18,7 +18,7 @@
 
 </div>
 
-Tired of uploading a markdown file to your GitHub for every new blog post? Having colleagues who don't know how to git commit? or simply you don't want to integrate with another CMS?
+Tired of committing markdown files to your git repo for every new blog post? Having colleagues who don't know how to git commit? or simply you don't want to introduce an additional toolset (CMS) to manage the content of your website?
 
 **gatsby-source-notion** is a solution for you manage the content of your Gatsby site without any
 
@@ -27,7 +27,8 @@ Tired of uploading a markdown file to your GitHub for every new blog post? Havin
 - 👉 Allow you to build a website with content from your Notion databases or pages
 - 💈 Page contents in markdown!
 - ⌨️ Title and their properties in plain text accessible via the front matter
-- 🔮 All raw properties accessible via GraphQL
+- 🖼️ URL for cover image and icon!
+- 🔮 All page properties accessible via GraphQL
 - 🍻 Support for `remark` and `mdx`
 - 👀 Near real-time preview in development mode
 
@@ -112,7 +113,7 @@ Here is an example in TypeScript. A JS implementation would follow the same logi
 
 ```ts
 /* gatsby-node */
-import type { GatsbyNode } from 'gatsbby';
+import type { GatsbyNode } from 'gatsby';
 
 // types generated from a code generator such as `gatsby-plugin-graphql-codegen`
 import type { BlogsQuery } from '@graphql';
@@ -253,7 +254,7 @@ Don't worry though, because it’s only a matter of time before you see the chan
 As this plugin relies on the the official Notion API which is still in beta, we share the same limitations as the API.
 
 - Currently, only text-based blocks can be extracted via this API.
-  i.e. Items such as embedded pdfs are not supported.
+  i.e. Items such as embedded PDFs are not supported.
 - If you have a very long or sizing page, be aware that [the official Notion API has a limit of maximum size of 1000 block elements and 500kb](https://developers.notion.com/reference/errors#size-limits).  
   Currently, there is no way we can get data beyond that.
 - Indentation is only supported for lists such as bullets, numbers and to-do lists.
@@ -281,6 +282,16 @@ You just need to embed them using the normal markdown syntax as part of your par
 ![alt text](path-to-image)
 ```
 
+# Cover & Icon
+
+Now, cover image and icon are accessible as part of pages' metadata.
+
+For cover image, the URL for it is exported via `coverImage`.
+For Icon, if it is an image, its URL will be supplied in `iconImage`;
+if it is an emoji, its value will be supplied in `iconEmoji`.
+
+They can also be found within the frontmatter of the MDX export.
+
 # FAQ
 
 1. How can I specify different databases and pages for different environments, such as those used by staging, or production?
@@ -293,6 +304,10 @@ You just need to embed them using the normal markdown syntax as part of your par
 3. What can I do if I don't want to permanently delete a post but just hide it for awhile?
    You can create a page property (for example, a publish double checkbox) and use this information in your page creation process.
    If you're in the development mode with preview enabled, you should be able to see the removal in near real-time.
+
+4. Since the introduction of access capabilities in Notion API in Dec 2021,
+   some content may be unexpectedly missing from the return due to access control granted to the API client.
+   Make sure the API client has `read` permission to all of the content you want to output.
 
 # About
 
