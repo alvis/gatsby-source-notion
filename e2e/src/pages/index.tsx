@@ -14,12 +14,9 @@
  */
 
 import { graphql } from 'gatsby';
-import React from 'react';
 
 import type { PageProps } from 'gatsby';
 import type { FC } from 'react';
-
-import type { IndexPageQuery } from '~graphql';
 
 // page query
 export const query = graphql`
@@ -44,7 +41,7 @@ export const query = graphql`
  * @inheritdoc
  * @returns a component holding the test page
  */
-const Test: FC<PageProps<IndexPageQuery>> = ({ data }) => (
+const Test: FC<PageProps<Queries.IndexPageQuery>> = ({ data }) => (
   <>
     <section id="databases">
       <h1>Databases</h1>
@@ -58,7 +55,7 @@ const Test: FC<PageProps<IndexPageQuery>> = ({ data }) => (
       <h1>Pages</h1>
       <ul>
         {data.allNotionPage.nodes.map(({ ref, title }) => (
-            <li key={ref}>{title}</li>
+          <li key={ref}>{title}</li>
         ))}
       </ul>
     </section>
@@ -73,4 +70,3 @@ const Test: FC<PageProps<IndexPageQuery>> = ({ data }) => (
 // const Test: FC<PageProps> = ({ data }) => <div>hi!</div>;
 
 export default Test;
- 

@@ -20,14 +20,11 @@
 
 import type { GatsbyConfig } from 'gatsby';
 
+export const graphqlTypegen: GatsbyConfig['graphqlTypegen'] = true;
+
+export const jsxRuntime: GatsbyConfig['jsxRuntime'] = 'automatic';
+
 export const plugins: GatsbyConfig['plugins'] = [
-  {
-    resolve: 'gatsby-plugin-graphql-codegen',
-    options: {
-      fileName: './types/~graphql.ts',
-      documentPaths: ['./src/**/*.{ts,tsx}'],
-    },
-  },
   {
     resolve: 'gatsby-source-notion',
     options: {
@@ -35,7 +32,3 @@ export const plugins: GatsbyConfig['plugins'] = [
     },
   },
 ];
-
-export default {
-  plugins,
-};

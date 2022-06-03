@@ -1,7 +1,14 @@
 {
-  "preset": "presetter-preset-strict",
+  "preset": ["presetter-preset-strict", "presetter-preset-react"],
   "config": {
-    "gitignore": ["/.cache", "/public", "/screenshots", "/types/~*", "/videos"],
+    "gitignore": [
+      "/.cache",
+      "/public",
+      "/screenshots",
+      "/types/~*",
+      "/videos",
+      "gatsby-types.d.ts"
+    ],
     "tsconfig": {
       "compilerOptions": {
         "lib": ["DOM"],
@@ -12,6 +19,5 @@
   "variable": {
     "source": "src",
     "output": "public"
-  },
-  "ignores": [".babelrc.json"]
+  }
 }
