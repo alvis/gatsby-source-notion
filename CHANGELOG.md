@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+# [1.1.0](https://github.com/alvis/gatsby-source-notion/compare/v1.0.5...v1.1.0) (2022-06-08)
+
+
+### ✨ Features
+
+* add support for cover and icon ([3e0c3e7](https://github.com/alvis/gatsby-source-notion/commit/3e0c3e7d6ca6cf6750f5591c29c14edf523939b9))
+* add support for created by and last edited by ([e0a41d9](https://github.com/alvis/gatsby-source-notion/commit/e0a41d9617165b5ae6f3a18909ea11c8e7a0645c))
+* use Notion client for better compatibility ([979b057](https://github.com/alvis/gatsby-source-notion/commit/979b0578915d281a64b4444a658c1984c0e4ef23))
+
+
+### 🛠 Builds
+
+* remove the now unnecessay ts-node hack ([37109ea](https://github.com/alvis/gatsby-source-notion/commit/37109eaa4ba4873b82e36fbe1f9b8610ed9d3d10))
+* update presetter to v3.2 ([7cbbcaa](https://github.com/alvis/gatsby-source-notion/commit/7cbbcaac9586cb2c27785bfa16b4570b497e2f3e))
+
+
+### 📦 Code Refactoring
+
+* use Americian English ([fe3c276](https://github.com/alvis/gatsby-source-notion/commit/fe3c27640593f5f3bf518b71e07f98b6780d57cb))
+
+
+### 🚨 Tests
+
+* update gatsby config in the e2e test ([5f80191](https://github.com/alvis/gatsby-source-notion/commit/5f80191de0075befa8a8afc984368d3f0c9c7fc5))
+
+
+### ⚙️ Continuous Integrations
+
+* run tests on master branches only ([ba0d696](https://github.com/alvis/gatsby-source-notion/commit/ba0d696f44214f3cc1cef9aee7f08a9f0e24974f))
+
+
+### 💎 Styles
+
+* fix issues with latest linter rules ([d4ae392](https://github.com/alvis/gatsby-source-notion/commit/d4ae39239383fd99c338ed0df18b33302814e6d1))
+
+
+
 ## [1.0.5](https://github.com/alvis/gatsby-source-notion/compare/v1.0.4...v1.0.5) (2021-11-04)
 
 
