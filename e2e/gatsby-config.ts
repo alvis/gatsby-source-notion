@@ -25,6 +25,7 @@ export const graphqlTypegen: GatsbyConfig['graphqlTypegen'] = true;
 export const jsxRuntime: GatsbyConfig['jsxRuntime'] = 'automatic';
 
 export const plugins: GatsbyConfig['plugins'] = [
+  'gatsby-plugin-mdx',
   {
     resolve: 'gatsby-source-notion',
     options: {
