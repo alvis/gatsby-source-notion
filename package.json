@@ -19,7 +19,17 @@
     "email": "alvis@hilbert.space"
   },
   "main": "lib/index.js",
+  "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "node": {
+        "require": "./lib/index.js",
+        "import": "./lib/index.mjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alvis/gatsby-source-notion.git"
