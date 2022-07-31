@@ -1,6 +1,11 @@
 {
   "preset": "presetter-preset-strict",
   "config": {
+    "eslint": {
+      "rules": {
+        "jsdoc/require-returns-check": "off"
+      }
+    },
     "npmignore": ["!gatsby-node.js"]
   }
 }
