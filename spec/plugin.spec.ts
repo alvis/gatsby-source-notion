@@ -33,6 +33,11 @@ jest.mock('#node', () => ({
 
 const client = new Notion({ token: 'token' });
 
+// unset any environment variables that may be set from the parent environment
+delete process.env['GATSBY_NOTION_TOKEN'];
+delete process.env['GATSBY_NOTION_DATABASES'];
+delete process.env['GATSBY_NOTION_PAGES'];
+
 describe('fn:computeUpdateInterval', () => {
   it('compute the interval based on the total number of databases and pages', () => {
     expect(

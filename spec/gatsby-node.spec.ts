@@ -35,6 +35,11 @@ jest.mock('#plugin', () => {
   };
 });
 
+// unset any environment variables that may be set from the parent environment
+delete process.env['GATSBY_NOTION_TOKEN'];
+delete process.env['GATSBY_NOTION_DATABASES'];
+delete process.env['GATSBY_NOTION_PAGES'];
+
 describe('fn:pluginOptionsSchema', () => {
   it('pass with no option provided at all', () => {
     expect(
