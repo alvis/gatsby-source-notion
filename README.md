@@ -266,7 +266,6 @@ As this plugin relies on the the official Notion API which is still in beta, we 
 
 - Sub Page
 - Call out
-- Image
 - Video
 - Code Block
 - Coloured Text
@@ -274,13 +273,18 @@ As this plugin relies on the the official Notion API which is still in beta, we 
 
 ## Image
 
-As of `2021-07-01`, the official Notion API doesn't export any image block from a page.
-However, there is a workaround that you can use to inject images into an article.
-You just need to embed them using the normal markdown syntax as part of your paragraph like this:
+Since v3.3, `gatsby-source-notion` provided a limited support for images on a Notion page.
+Now, all images on a Notion page will be translated into the `![caption](url)` syntax and subsequently converted to a `img` element if you use `gatsby-plugin-mdx`.
 
-```md
-![alt text](path-to-image)
-```
+However, it has a caveat. Embedding images would probably be missing in your final web site.
+It is because the embedded image URL returned from Notion is valid only for 1 hour.
+[This is a restriction from Notion.](https://developers.notion.com/reference/file-object#files-uploaded-to-notion-objects)
+As gatsby would not download the image for further processing,
+you simply cannot use Notion as your image host.
+
+Plugins like [gatsby-remark-images-anywhere](https://github.com/d4rekanguok/gatsby-remark-images-anywhere) would solve the issue.
+However, as of `2022-07-01` there is no similar plugin that supports Gatsby V4.
+Let us know if you find any.
 
 # Cover & Icon
 

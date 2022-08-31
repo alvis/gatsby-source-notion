@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------------
  */
 
-import { graphql } from 'gatsby';
+import { graphql, Link } from 'gatsby';
 
 import type { PageProps } from 'gatsby';
 import type { FC } from 'react';
@@ -31,6 +31,9 @@ export const query = graphql`
       nodes {
         ref
         title
+        properties {
+          path
+        }
       }
     }
   }
@@ -54,8 +57,14 @@ const Test: FC<PageProps<Queries.IndexPageQuery>> = ({ data }) => (
     <section id="pages">
       <h1>Pages</h1>
       <ul>
-        {data.allNotionPage.nodes.map(({ ref, title }) => (
-          <li key={ref}>{title}</li>
+        {data.allNotionPage.nodes.map(({ ref, title, properties }) => (
+          <li key={ref}>
+            {properties?.path ? (
+              <Link to={properties.path}>{title}</Link>
+            ) : (
+              title
+            )}
+          </li>
         ))}
       </ul>
     </section>

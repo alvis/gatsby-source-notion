@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------------
  */
 
-import type { Block, NotionAPIRichText } from '#types';
+import type { Block, NotionAPIBlock, NotionAPIRichText } from '#types';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 
@@ -96,6 +96,20 @@ export function math(block: NotionAPIRichText): NotionAPIRichText {
 /* eslint-enable */
 
 /**
+ * get the url of a file property
+ * @param image a file property returned from Notion API
+ * @returns its url
+ */
+export function image(
+  image: Extract<NotionAPIBlock, { type: 'image' }>['image'],
+): string {
+  const caption = texts(image.caption);
+  const url = image.type === 'external' ? image.external.url : image.file.url;
+
+  return `![${caption}](${url})`;
+}
+
+/**
  * convert a RichText block to markdown format
  * @param block a RichText block to be parsed
  * @returns text in markdown format
@@ -155,6 +169,7 @@ function appendChildren(parent: string, block: Block, indent: string): string {
  * @param indent space to be prefixed to the content per line
  * @returns text in markdown format
  */
+// eslint-disable-next-line max-lines-per-function
 export function parse(block: Block, indent = ''): string | null {
   const append = (text: string): string =>
     appendChildren(text, block, `${indent}  `);
@@ -181,6 +196,8 @@ export function parse(block: Block, indent = ''): string | null {
       return `${append(texts(block.toggle.rich_text))}\n`;
     case 'child_page':
       return `${append(block.child_page.title)}\n`;
+    case 'image':
+      return `${append(image(block.image))}\n`;
     case 'unsupported':
     default:
       return null;

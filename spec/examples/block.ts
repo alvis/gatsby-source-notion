@@ -263,6 +263,63 @@ export const header3: Block = {
   },
 };
 
+export const embeddedImage: Block = {
+  ...commonMetadata,
+  has_children: false,
+  type: 'image',
+  image: {
+    type: 'file',
+    caption: [
+      {
+        type: 'text',
+        text: { content: 'caption', link: null },
+        annotations: {
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          underline: false,
+          code: false,
+          color: 'default',
+        },
+        plain_text: 'caption',
+        href: null,
+      },
+    ],
+    file: {
+      url: 'url',
+      expiry_time: '2000-01-01T00:00:00.000Z',
+    },
+  },
+};
+
+export const externalImage: Block = {
+  ...commonMetadata,
+  has_children: false,
+  type: 'image',
+  image: {
+    type: 'external',
+    caption: [
+      {
+        type: 'text',
+        text: { content: 'caption', link: null },
+        annotations: {
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          underline: false,
+          code: false,
+          color: 'default',
+        },
+        plain_text: 'caption',
+        href: null,
+      },
+    ],
+    external: {
+      url: 'url',
+    },
+  },
+};
+
 export const paragraphSingleline: Block = {
   ...commonMetadata,
   has_children: false,
@@ -543,6 +600,8 @@ export const full: Block[] = [
       ],
     },
   },
+  embeddedImage,
+  externalImage,
   {
     ...commonMetadata,
     has_children: false,

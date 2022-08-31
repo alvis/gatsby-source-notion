@@ -18,6 +18,7 @@ import {
   italic,
   strikethrough,
   code,
+  image,
   text,
   texts,
   parse,
@@ -28,6 +29,8 @@ import {
   header1,
   header2,
   header3,
+  embeddedImage,
+  externalImage,
   paragraphEmpty,
   paragraphSingleline,
   paragraphMultiline,
@@ -39,7 +42,7 @@ import {
   unsupportedIndented,
 } from './examples';
 
-import type { NotionAPIRichText } from '#types';
+import type { NotionAPIBlock, NotionAPIRichText } from '#types';
 
 function example(
   annotation: Partial<NotionAPIRichText['annotations']> = {},
@@ -151,6 +154,16 @@ describe('fn:code', () => {
   });
 });
 
+describe('fn:image', () => {
+  it('convert embedded image to markdown format', () => {
+    expect(image(embeddedImage['image'])).toEqual('![caption](url)');
+  });
+
+  it('convert external image to markdown format', () => {
+    expect(image(externalImage['image'])).toEqual('![caption](url)');
+  });
+});
+
 describe('fn:text', () => {
   const annotated: NotionAPIRichText = example(
     {
@@ -222,6 +235,14 @@ describe('fn:parse', () => {
     expect(parse(header3)).toEqual(`### Heading 3\n`);
   });
 
+  it('turn an image block to the right markdown format', () => {
+    expect(parse(externalImage)).toEqual('![caption](url)\n');
+  });
+
+  it('turn an image block to the right markdown format', () => {
+    expect(parse(embeddedImage)).toEqual('![caption](url)\n');
+  });
+
   it('turn an empty paragraph block as a new line', () => {
     expect(parse(paragraphEmpty)).toEqual('\n');
   });
@@ -272,6 +293,10 @@ describe('fn:markdown', () => {
 ### Heading 3
 
 # Paragraph
+
+![caption](url)
+
+![caption](url)
 
 Paragraph 1
 

@@ -25,10 +25,17 @@ export const graphqlTypegen: GatsbyConfig['graphqlTypegen'] = true;
 export const jsxRuntime: GatsbyConfig['jsxRuntime'] = 'automatic';
 
 export const plugins: GatsbyConfig['plugins'] = [
+  'gatsby-plugin-sharp',
   {
     resolve: 'gatsby-source-notion',
     options: {
       previewCallRate: 0.5,
+    },
+  },
+  {
+    resolve: 'gatsby-transformer-remark',
+    options: {
+      plugins: ['gatsby-remark-images'],
     },
   },
 ];
