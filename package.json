@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-notion",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Use Notion as the CMS for your Gatsby site, supporting multiple databases and pages.",
   "keywords": [
     "gatsby",

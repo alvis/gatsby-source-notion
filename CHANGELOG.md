@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+# [1.2.0](https://github.com/alvis/gatsby-source-notion/compare/v1.1.0...v1.2.0) (2022-08-31)
+
+
+### ✨ Features
+
+* support image block ([0bb73c8](https://github.com/alvis/gatsby-source-notion/commit/0bb73c8199784a2d3266c5b7ddfe2c5fbed1fbeb)), closes [#4](https://github.com/alvis/gatsby-source-notion/issues/4)
+
+
+### 🐛 Bug Fixes
+
+* update package dependencies ([1554130](https://github.com/alvis/gatsby-source-notion/commit/15541306a51421d39802741b36ce695e105eddcb))
+
+
+### 🚨 Tests
+
+* remove potential set environment variable to avoid interference ([d5e9c46](https://github.com/alvis/gatsby-source-notion/commit/d5e9c4668421b4c4183455b8f24dc77faa9c24a6))
+
+
+### ⚙️ Continuous Integrations
+
+* update config with alias to fix node versions ([2534e77](https://github.com/alvis/gatsby-source-notion/commit/2534e777615073859758e8ffb413351d61cca15f))
+
+
+
 # [1.1.0](https://github.com/alvis/gatsby-source-notion/compare/v1.0.5...v1.1.0) (2022-06-08)
 
 
