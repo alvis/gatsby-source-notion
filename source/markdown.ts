@@ -183,6 +183,9 @@ export function parse(block: Block, indent = ''): string | null {
       return `### ${texts(block.heading_3.rich_text)}\n`;
     case 'paragraph':
       return `${append(texts(block.paragraph.rich_text))}\n`;
+    case 'quote': {
+      return `> ${texts(block.quote.rich_text)}`;
+    }
     case 'bulleted_list_item':
       return indent + append(`* ${texts(block.bulleted_list_item.rich_text)}`);
     case 'numbered_list_item':
